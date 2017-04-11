@@ -1,0 +1,9 @@
+ls -l  > temp
+wc temp  
+ls -l -f > temp
+wc < temp > temp2
+sort < temp > temp3
+cat temp2
+diff temp2 temp3 > temp4
+wc temp4
+exit

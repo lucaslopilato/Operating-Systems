@@ -1,0 +1,6 @@
+ls -l | sort
+ls -l -f | sort | wc
+ls -l  -f | sort | wc 
+ls -l  -f | sort | wc 
+cat Makefile | sort | wc 
+exit

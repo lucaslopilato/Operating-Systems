@@ -1,0 +1,7 @@
+ls -l -f  | sort > temp
+ls -l  | sort > temp1
+diff temp temp1 > temp2
+cat < temp | uniq | sort > temp3
+diff temp3 temp |sort | wc > temp4
+cat temp4 
+exit
