@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <stdlib.h>
+#include <signal.h>
 
 #define MAX_TOKEN_LENGTH 50
 #define MAX_TOKEN_COUNT 100
@@ -22,6 +23,8 @@
 **/
 
 void runcommand(char* command, char** args) {
+//before fork separate via some kind of tokenizing on <, >, and |
+//take what is on the right side of delineator's output into what is on the left
   pid_t pid = fork();
   if(pid) { // parent
     	waitpid(pid, NULL, 0);
@@ -29,8 +32,17 @@ void runcommand(char* command, char** args) {
     	execvp(command, args);
   }
 }
+//Based on Nik's implementation handles ctrl+z
+void ctrlz(int sig){
+    static int count = 0;
+    count++;
+    if (count == 1)
+        signal(SIGTSTP, SIG_DFL);
+}
+
 
 int main(){
+    signal(SIGTSTP, ctrlz);
     char line[MAX_LINE_LENGTH];
     //printf("shell: "); 
     while(fgets(line, MAX_LINE_LENGTH, stdin)) {
