@@ -22,9 +22,17 @@
  *   shell: exit
 **/
 
-void runcommand(char* command, char** args) {
+void runcommand(char* command, char** args, int count) {
 //before fork separate via some kind of tokenizing on <, >, and |
 //take what is on the right side of delineator's output into what is on the left
+  printf("Command is %s", command);
+  
+  int size = sizeof(*args)/sizeof(args[0]);
+  printf("Size %d", count);
+  //for (int i = 0; i<size; i++){
+    printf("\n Args are %s \n" , args[1]);
+  //}
+  
   pid_t pid = fork();
   if(pid) { // parent
     	waitpid(pid, NULL, 0);
@@ -63,7 +71,7 @@ int main(){
 	if(argument_count>0){
 		if (strcmp(arguments[0], "exit") == 0)
             		exit(0);
-    		runcommand(command, arguments);
+    		runcommand(command, arguments, argument_count);
 	}
         //printf("shell: "); 
     }
