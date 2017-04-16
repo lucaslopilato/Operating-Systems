@@ -22,36 +22,16 @@
  *   shell: exit
 **/
 
-char* specialToken[3] = { "<" , ">" , "|" };
-
 void runcommand(char* command, char** args, int count) {
-
-  // Notes from the TA
-  // before fork separate via some kind of tokenizing on <, >, and |
-  // take what is on the right side of delineator's output into what is on the left
-
-  // Check the number of tokens given in the command line
-  printf("Size %d \n", count);
-  printf("Args are: \n ");
+//before fork separate via some kind of tokenizing on <, >, and |
+//take what is on the right side of delineator's output into what is on the left
+  printf("Command is %s", command);
   
-  for (int i = 0; i<count; i++){
-    printf("           %s \n" , args[i]);
-    
-    if(strcmp(args[i],specialToken[0])==0) {
-      // handle "<" function process
-      printf("here is a <! \n");
-    }
-    
-    if(strcmp(args[i],specialToken[1])==0) {
-      // handle ">" function process
-      printf("here is a >! \n");
-    }
-    
-    if(strcmp(args[i],specialToken[2])==0) {
-      // handle "|" function process"
-      printf("here is a |! \n");
-    }
-  }
+  int size = sizeof(*args)/sizeof(args[0]);
+  printf("Size %d", count);
+  //for (int i = 0; i<size; i++){
+    printf("\n Args are %s \n" , args[1]);
+  //}
   
   pid_t pid = fork();
   if(pid) { // parent
@@ -60,7 +40,6 @@ void runcommand(char* command, char** args, int count) {
     	execvp(command, args);
   }
 }
-
 //Based on Nik's implementation handles ctrl+z
 void ctrlz(int sig){
     static int count = 0;
