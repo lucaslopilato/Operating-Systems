@@ -15,7 +15,7 @@ test:
 	./simple < testfile
 
 clean:
-	rm -f simple
+	rm simple
 
 
 .c.o:
