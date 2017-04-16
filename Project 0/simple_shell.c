@@ -30,8 +30,8 @@ void error(int errno){
   if(DEBUG){
     printf("Error detected: ");
     switch(errno){
-      case 1: printf(">3 Pipes requested\n"); break;
-      case 2: printf("Pipe Creation failed\n"); break;
+      case 1: printf("greater than three pipes requested\n"); break;
+      case 2: printf("pipe creation failed\n"); break;
       default: printf("unspecified error\n");
     }
   }
@@ -87,6 +87,7 @@ void runcommand(char* command, char** args, int count) {
     if(pipe(pipes[i]) < 0) error(2);
   }
   
+
   pid_t pid = fork();
   if(pid) { // parent
       waitpid(pid, NULL, 0);
