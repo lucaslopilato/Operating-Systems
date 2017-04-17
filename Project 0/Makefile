@@ -15,7 +15,7 @@ test:
 	./simple < testfile
 
 clean:
-	rm simple
+	rm -f simple
 
 leak:
 	valgrind --leak-check=yes echo "ls | sort" | ./simple 
