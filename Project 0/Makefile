@@ -1,5 +1,5 @@
 CC      = gcc
-CFLAGS  = -O
+CFLAGS  = -O -g
 LDFLAGS  = -O 
 
 
@@ -16,6 +16,9 @@ test:
 
 clean:
 	rm simple
+
+leak:
+	valgrind --leak-check=yes echo "ls | sort" | ./simple 
 
 
 .c.o:
