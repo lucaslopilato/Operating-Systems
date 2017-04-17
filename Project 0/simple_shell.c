@@ -92,8 +92,66 @@ void runcommand(char* command, char** args, int count) {
   if(pid) { // parent
       waitpid(pid, NULL, 0);
   } else { // child
-      execvp(command, args);
-  }
+
+      //Count of items in current command
+      int currentCount = 0;
+      int pipeIndex = 0;
+
+      //Parse the arguments
+      for(int i=0; i<count; i++){
+
+        //Check if argument is a pipe
+        if(strcmp(args[i], "|") == 0){
+            if(pipeIndex != pipeCount){
+                //If argument is not the first command
+                //Hook up stdin
+                if(pipeIndex != 0){
+                    //Hook up stdin
+                    dup2(0, pipes[pipeIndex-1][0]);
+
+                    //Close old FDs
+                    //close(pipes[pipeIndex-1][0]);
+                }
+
+                //If argument not the last command
+                //Hook up stdout
+                if(pipeIndex != pipeCount){
+                    //Hook up stdout
+                    dup2(1, pipes[pipeIndex][1]);
+
+                    //Close old FDs
+                    //close(pipes[pipeIndex][1]);
+                }
+
+                pipeIndex++;
+            }
+            //Handle Final Command
+            else if(pipeCount > 0){
+                dup2(0, pipes[pipeIndex][0]);
+
+                //close(0);
+            }
+
+            //Prepare memory for parsing
+            args[i] = NULL;
+            execvp(args[i-currentCount], &args[i-currentCount]);
+            args[i] = "|";
+
+ 
+        //Reset Count
+        currentCount = 0;
+        }
+
+        else currentCount++;
+      }
+
+      //If No Pipes Found, Process as normal
+      if(pipeCount == 0){
+        execvp(command, args);
+      }
+
+        
+    }
 }
 
 //Based on Nik's implementation handles ctrl+z
