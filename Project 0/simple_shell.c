@@ -32,6 +32,8 @@ void error(int errno){
     switch(errno){
       case 1: printf("greater than three pipes requested\n"); break;
       case 2: printf("pipe creation failed\n"); break;
+      case 3: printf("Failed to dup STDIN\n"); break;
+      case 4: printf("Failed to dup STDOUT\n"); break;
       default: printf("unspecified error\n");
     }
   }
@@ -54,7 +56,14 @@ void runcommand(char* command, char** args, int count) {
   //Count the number of pipes
   int pipeCount = 0;
   int pipes[3][2];
+  char** commands[4];
+  //Number of commands followed by a pipe '|'
+  int pipeCommands = 0;
+  //Index of the last command
+  int lastCommand = 0; 
   
+  //Keep Track of number of arguments in the current command
+  int currentCount = 0;
   for (int i = 0; i<count; i++){
     printf("           %s \n" , args[i]);
     
@@ -67,91 +76,84 @@ void runcommand(char* command, char** args, int count) {
       // handle ">" function process
       printf("here is a >! \n");
     }
-    
-    if(strcmp(args[i],specialToken[2])==0) {
-      // handle "|" function process"
-      
-      //Count the number of pipes needed
-      //Piazza says max 3
+    //Handle "|" function process
+    else if(strcmp(args[i],specialToken[2])==0) {
+      //Create New Pipe
+      if(pipe(pipes[pipeCount]) < 0) error(2);
       pipeCount++;
 
-      printf("here is a |! \n");
+      //Create Partitioned Commands
+      commands[pipeCommands] = &args[i-currentCount];
+      args[i] = NULL; //Physical Partition
+      pipeCommands++;
+
+      //Guess the index of the last command
+      lastCommand = i+1;
+      printf("last command %d\n", lastCommand);
+
+      //Reset Current Count
+      currentCount = 0;
+      continue;
+
+      //printf("here is a |! \n");
     }
+    
+    //Increment count of items in command
+    currentCount++;
   }
 
   //Ensure Proper Amount of Pipes
   if(pipeCount > 3) error(1);
 
-  //Initialize The Total Number of Pipes
+  //Execute Piped Commands
   for(int i=0; i<pipeCount; i++){
-    if(pipe(pipes[i]) < 0) error(2);
-  }
-  
+    pid_t pid = fork();
+    if(pid) { // parent
+      if(i != pipeCount - 1){
+        close(pipes[i][0]);
+        close(pipes[i][1]);
+      }
+      waitpid(pid, NULL, 0);
+    } else { // child
 
+    
+    //If argument is not the first command
+    if(i > 0){
+      //Hook up stdin
+      dup2(pipes[i-1][0], 0);
+
+      //Close old FDs 
+      close(pipes[i-1][0]);
+      close(pipes[i-1][1]);
+    }
+    
+    //Hook up stdout
+    dup2(pipes[i][1],1);
+    close(pipes[i][0]);
+    close(pipes[i][1]);
+
+    //Close old FDs
+    execvp(commands[i][0], commands[i]);
+    }
+  }
+ 
+  //Handle Last Command
   pid_t pid = fork();
   if(pid) { // parent
-      waitpid(pid, NULL, 0);
+    close(pipes[pipeCount-1][0]);
+    close(pipes[pipeCount-1][1]);
+    waitpid(pid, NULL, 0);
   } else { // child
 
-      //Count of items in current command
-      int currentCount = 0;
-      int pipeIndex = 0;
-
-      //Parse the arguments
-      for(int i=0; i<count; i++){
-
-        //Check if argument is a pipe
-        if(strcmp(args[i], "|") == 0){
-            if(pipeIndex != pipeCount){
-                //If argument is not the first command
-                //Hook up stdin
-                if(pipeIndex != 0){
-                    //Hook up stdin
-                    dup2(0, pipes[pipeIndex-1][0]);
-
-                    //Close old FDs
-                    //close(pipes[pipeIndex-1][0]);
-                }
-
-                //If argument not the last command
-                //Hook up stdout
-                if(pipeIndex != pipeCount){
-                    //Hook up stdout
-                    dup2(1, pipes[pipeIndex][1]);
-
-                    //Close old FDs
-                    //close(pipes[pipeIndex][1]);
-                }
-
-                pipeIndex++;
-            }
-            //Handle Final Command
-            else if(pipeCount > 0){
-                dup2(0, pipes[pipeIndex][0]);
-
-                //close(0);
-            }
-
-            //Prepare memory for parsing
-            args[i] = NULL;
-            execvp(args[i-currentCount], &args[i-currentCount]);
-            args[i] = "|";
-
- 
-        //Reset Count
-        currentCount = 0;
-        }
-
-        else currentCount++;
-      }
-
-      //If No Pipes Found, Process as normal
-      if(pipeCount == 0){
-        execvp(command, args);
-      }
-
-        
+    //If there was a pipe, collect last output
+    if(pipeCount > 0){
+        dup2(pipes[pipeCount-1][0], 0);
+        close(pipes[pipeCount-1][0]);
+        close(pipes[pipeCount-1][1]);
     }
+
+    execvp(args[lastCommand], &args[lastCommand]);
+  }
 }
 
 //Based on Nik's implementation handles ctrl+z
