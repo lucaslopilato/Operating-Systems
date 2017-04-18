@@ -69,35 +69,29 @@ void runcommand(char* command, char** args, int count) {
   int currentCount = 0;
   for (int i = 0; i<count; i++){
     if(DEBUG) printf("           %s \n" , args[i]);
-    
+
+
     if(strcmp(args[i],specialToken[0])==0) {
       // handle "<" function process
-      printf("here is a <! \n");
       args[i] = args[i+1];
-      pid_t pid = fork();
+      
+      int pid = fork();
       if(pid<0){
-	perror("Fork Failed");
+	perror("Could Not Fork");
       }
-      else if(pid==0){ // Child
-	  int fd;
-	  //args[i] = args[i+1];
-	  printf("In Child \n");
-	  printf(args[i+1]);
-	  fd = open(args[i+1], O_RDONLY);
-	  // Check if file exists
-	  if(fd<0){ 
-	    printf("shell: %s: No such file or directory\n", args[i+1]);
-	  }
-	  
-	  dup2(fd,0);
-	  close(fd);
-	  execvp(args[0],args);
-	  //close (fd);
+      else if(pid==0){
+	int fd;
+	fd = open(args[i+1], O_RDONLY);
+	// Check if file exists
+	if(fd<0){ 
+	  printf("shell: %s: No such file or directory\n", args[i+1]);
+	}
+	dup2(fd,0);
+	close(fd);
+	execvp(args[0],args);
       }
-      else{ //Parent
-
+      else{
 	waitpid(pid, NULL, 0);
-	printf("End Parent \n");
       }
     }
     
@@ -105,8 +99,23 @@ void runcommand(char* command, char** args, int count) {
       // handle ">" function process
       printf("here is a >! \n");
 
-      int fd;
+      args[i] = args[i+1];
+      pid_t fd;
       fd = open(args[i+1], O_WRONLY | O_CREAT | O_TRUNC, 0666);
+
+      int pid = fork();
+      if(pid<0){
+	perror("could not fork");
+      }
+      else if(pid == 0){
+	dup2(fd,1);
+	close(fd);
+	execvp(args[0],args);
+      }
+      else{
+	waitpid(pid, NULL, 0);
+      }
+      
       
       
     }
