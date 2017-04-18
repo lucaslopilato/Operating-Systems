@@ -5,6 +5,7 @@
 #include <sys/wait.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <fcntl.h>
 
 #define MAX_TOKEN_LENGTH 50
 #define MAX_TOKEN_COUNT 100
@@ -42,6 +43,7 @@ void error(int errno){
   exit(errno);
 }
 
+
 char* specialToken[3] = { "<" , ">" , "|" };
 
 void runcommand(char* command, char** args, int count) {
@@ -71,11 +73,42 @@ void runcommand(char* command, char** args, int count) {
     if(strcmp(args[i],specialToken[0])==0) {
       // handle "<" function process
       printf("here is a <! \n");
+      args[i] = args[i+1];
+      pid_t pid = fork();
+      if(pid<0){
+	perror("Fork Failed");
+      }
+      else if(pid==0){ // Child
+	  int fd;
+	  //args[i] = args[i+1];
+	  printf("In Child \n");
+	  printf(args[i+1]);
+	  fd = open(args[i+1], O_RDONLY);
+	  // Check if file exists
+	  if(fd<0){ 
+	    printf("shell: %s: No such file or directory\n", args[i+1]);
+	  }
+	  
+	  dup2(fd,0);
+	  close(fd);
+	  execvp(args[0],args);
+	  //close (fd);
+      }
+      else{ //Parent
+
+	waitpid(pid, NULL, 0);
+	printf("End Parent \n");
+      }
     }
     
     if(strcmp(args[i],specialToken[1])==0) {
       // handle ">" function process
       printf("here is a >! \n");
+
+      int fd;
+      fd = open(args[i+1], O_WRONLY | O_CREAT | O_TRUNC, 0666);
+      
+      
     }
     //Handle "|" function process
     else if(strcmp(args[i],specialToken[2])==0) {
