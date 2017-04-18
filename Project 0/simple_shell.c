@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <sys/wait.h>
 #include <stdlib.h>
 #include <signal.h>
@@ -133,7 +134,10 @@ void runcommand(char* command, char** args, int count) {
     close(pipes[i][1]);
     close(pipes[i][0]);
 
+    //Execute and handle errors if the function returns
     execvp(commands[i][0], commands[i]);
+    perror(commands[i][0]);
+    exit(1);
     }
   }
  
@@ -154,7 +158,10 @@ void runcommand(char* command, char** args, int count) {
         close(pipes[pipeCount-1][1]);
     }
 
+    //Execute and handle errors if the function returns
     execvp(args[lastCommand], &args[lastCommand]);
+    perror(args[lastCommand]);
+    exit(1);
   }
 }
 
