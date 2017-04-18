@@ -65,7 +65,7 @@ void runcommand(char* command, char** args, int count) {
   //Keep Track of number of arguments in the current command
   int currentCount = 0;
   for (int i = 0; i<count; i++){
-    printf("           %s \n" , args[i]);
+    if(DEBUG) printf("           %s \n" , args[i]);
     
     if(strcmp(args[i],specialToken[0])==0) {
       // handle "<" function process
@@ -89,7 +89,6 @@ void runcommand(char* command, char** args, int count) {
 
       //Guess the index of the last command
       lastCommand = i+1;
-      printf("last command %d\n", lastCommand);
 
       //Reset Current Count
       currentCount = 0;
@@ -109,13 +108,13 @@ void runcommand(char* command, char** args, int count) {
   for(int i=0; i<pipeCount; i++){
     pid_t pid = fork();
     if(pid) { // parent
-      if(i != pipeCount - 1){
-        close(pipes[i][0]);
-        close(pipes[i][1]);
+      if(i > 0 && i < pipeCount){
+        close(pipes[i-1][0]);
+        close(pipes[i-1][1]);
       }
       waitpid(pid, NULL, 0);
     } else { // child
-
+    
     
     //If argument is not the first command
     if(i > 0){
@@ -129,10 +128,11 @@ void runcommand(char* command, char** args, int count) {
     
     //Hook up stdout
     dup2(pipes[i][1],1);
-    close(pipes[i][0]);
-    close(pipes[i][1]);
 
     //Close old FDs
+    close(pipes[i][1]);
+    close(pipes[i][0]);
+
     execvp(commands[i][0], commands[i]);
     }
   }
@@ -140,8 +140,10 @@ void runcommand(char* command, char** args, int count) {
   //Handle Last Command
   pid_t pid = fork();
   if(pid) { // parent
-    close(pipes[pipeCount-1][0]);
-    close(pipes[pipeCount-1][1]);
+    if(pipeCount > 0){
+        close(pipes[pipeCount-1][0]);
+        close(pipes[pipeCount-1][1]);
+    }
     waitpid(pid, NULL, 0);
   } else { // child
 

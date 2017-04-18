@@ -18,7 +18,10 @@ clean:
 	rm -f simple
 
 leak:
-	valgrind --leak-check=yes echo "ls | sort" | ./simple 
+	valgrind --leak-check=yes echo "ls | sort" | ./simple
+
+three:
+	./simple < test3 
 
 
 .c.o:
