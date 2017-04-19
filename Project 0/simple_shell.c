@@ -129,6 +129,9 @@ void runcommand(char* command, char** args, int count) {
     	currentCount++;
 	}
 
+	//Put last command in command
+	commands[pipeCommands] = &args[lastCommand];
+
   	//Ensure Proper Amount of Pipes
   	if(pipeCount > 3) error(1);
 
@@ -144,9 +147,16 @@ void runcommand(char* command, char** args, int count) {
     	} 
     	else { // child
     
-    
+			int index = (commands[i] - commands[0] )/ sizeof(char*);
+			int size = (*commands[i+1] - *commands[i]);
+			printf("Args[i] %p, args[i+2] %p\n", args[0], args[2]);
+			printf("Commands i %p, commands i+1 %p\n", commands[0], commands[1]);
+			printf("index %d\n", index);
+			printf("size %d\n", size);
+
     		//If argument is not the first command
     		if(i > 0){
+      			
       			//Hook up stdin
       			dup2(pipes[i-1][0], 0);
 
@@ -167,8 +177,8 @@ void runcommand(char* command, char** args, int count) {
     		// find count = numArguments & command index
     		
     		
-    		int index = (commands[i] - commands[0] )/ sizeof(char*);
-    		int size = (commands[i+1] - commands[i] - sizeof(char*) ) / sizeof(char*);
+    		//int index = (commands[i] - commands[0] )/ sizeof(char*);
+    		//int size = (commands[i+1] - commands[i] - sizeof(char*) ) / sizeof(char*);
     		endCarrots(index, args, size);
 
 
@@ -200,7 +210,8 @@ void runcommand(char* command, char** args, int count) {
     	}
 
 	    // Handle '<' and '>'
-    	endCarrots(lastCommand, args, count);
+	    // make
+    	endCarrots(lastCommand, args, count - lastCommand);
     	
    		//Execute and handle errors if the function returns
     	execvp(args[lastCommand], &args[lastCommand]);
