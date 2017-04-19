@@ -47,165 +47,166 @@ void error(int errno){
 char* specialToken[3] = { "<" , ">" , "|" };
 
 void runcommand(char* command, char** args, int count) {
+	// Notes from the TA
+  	// before fork separate via some kind of tokenizing on <, >, and |
+ 	// take what is on the right side of delineator's output into what is on the left
 
-  // Notes from the TA
-  // before fork separate via some kind of tokenizing on <, >, and |
-  // take what is on the right side of delineator's output into what is on the left
+  	// Check the number of tokens given in the command line
+  	//printf("Size %d \n", count);
+  	//printf("Args are: \n ");
 
-  // Check the number of tokens given in the command line
-  printf("Size %d \n", count);
-  printf("Args are: \n ");
-
-  //Count the number of pipes
-  int pipeCount = 0;
-  int pipes[3][2];
-  char** commands[4];
-  //Number of commands followed by a pipe '|'
-  int pipeCommands = 0;
-  //Index of the last command
-  int lastCommand = 0; 
+  	//Count the number of pipes
+  	int pipeCount = 0;
+  	int pipes[3][2];
+  	char** commands[4];
+  	//Number of commands followed by a pipe '|'
+  	int pipeCommands = 0;
+  	//Index of the last command
+  	int lastCommand = 0; 
   
-  //Keep Track of number of arguments in the current command
-  int currentCount = 0;
-  for (int i = 0; i<count; i++){
-    if(DEBUG) printf("           %s \n" , args[i]);
+  	//Keep Track of number of arguments in the current command
+  	int currentCount = 0;
+  	for (int i = 0; i<count; i++){
 
+   		//Handle "|" function process
+  
+    	if(strcmp(args[i],specialToken[2])==0) {
+     		//Create New Pipe
+      		if(pipe(pipes[pipeCount]) < 0) error(2);
+      		pipeCount++;
 
-    if(strcmp(args[i],specialToken[0])==0) {
-      // handle "<" function process
-      args[i] = args[i+1];
-      
-      int pid = fork();
-      if(pid<0){
-	perror("Could Not Fork");
-      }
-      else if(pid==0){
-	int fd;
-	fd = open(args[i+1], O_RDONLY);
-	// Check if file exists
-	if(fd<0){ 
-	  printf("shell: %s: No such file or directory\n", args[i+1]);
+      		//Create Partitioned Commands
+      		commands[pipeCommands] = &args[i-currentCount];
+      		args[i] = NULL; //Physical Partition
+      		pipeCommands++;
+
+      		//Guess the index of the last command
+      		lastCommand = i+1;
+
+      		//Reset Current Count
+      		currentCount = 0;
+      		continue;
+    	}
+
+    	//Increment count of items in command
+    	currentCount++;
 	}
-	dup2(fd,0);
-	close(fd);
-	execvp(args[0],args);
-      }
-      else{
-	waitpid(pid, NULL, 0);
-      }
-    }
-    
-    if(strcmp(args[i],specialToken[1])==0) {
-      // handle ">" function process
-      printf("here is a >! \n");
 
-      args[i] = args[i+1];
-      pid_t fd;
-      fd = open(args[i+1], O_WRONLY | O_CREAT | O_TRUNC, 0666);
+  	//Ensure Proper Amount of Pipes
+  	if(pipeCount > 3) error(1);
 
-      int pid = fork();
-      if(pid<0){
-	perror("could not fork");
-      }
-      else if(pid == 0){
-	dup2(fd,1);
-	close(fd);
-	execvp(args[0],args);
-      }
-      else{
-	waitpid(pid, NULL, 0);
-      }
-      
-      
-      
-    }
-    //Handle "|" function process
-    else if(strcmp(args[i],specialToken[2])==0) {
-      //Create New Pipe
-      if(pipe(pipes[pipeCount]) < 0) error(2);
-      pipeCount++;
-
-      //Create Partitioned Commands
-      commands[pipeCommands] = &args[i-currentCount];
-      args[i] = NULL; //Physical Partition
-      pipeCommands++;
-
-      //Guess the index of the last command
-      lastCommand = i+1;
-
-      //Reset Current Count
-      currentCount = 0;
-      continue;
-
-      //printf("here is a |! \n");
-    }
-    
-    //Increment count of items in command
-    currentCount++;
-  }
-
-  //Ensure Proper Amount of Pipes
-  if(pipeCount > 3) error(1);
-
-  //Execute Piped Commands
-  for(int i=0; i<pipeCount; i++){
-    pid_t pid = fork();
-    if(pid) { // parent
-      if(i > 0 && i < pipeCount){
-        close(pipes[i-1][0]);
-        close(pipes[i-1][1]);
-      }
-      waitpid(pid, NULL, 0);
-    } else { // child
+  	//Execute Piped Commands
+  	for(int i=0; i<pipeCount; i++){
+    	pid_t pid = fork();
+    	if(pid) { // parent
+      		if(i > 0 && i < pipeCount){
+        		close(pipes[i-1][0]);
+        		close(pipes[i-1][1]);
+      		}
+      		waitpid(pid, NULL, 0);
+    	} 
+    	else { // child
     
     
-    //If argument is not the first command
-    if(i > 0){
-      //Hook up stdin
-      dup2(pipes[i-1][0], 0);
+    		//If argument is not the first command
+    		if(i > 0){
+      			//Hook up stdin
+      			dup2(pipes[i-1][0], 0);
 
-      //Close old FDs 
-      close(pipes[i-1][0]);
-      close(pipes[i-1][1]);
-    }
+      			//Close old FDs 
+      			close(pipes[i-1][0]);
+      			close(pipes[i-1][1]);
+    		}
     
-    //Hook up stdout
-    dup2(pipes[i][1],1);
+    		//Hook up stdout
+    		dup2(pipes[i][1],1);
 
-    //Close old FDs
-    close(pipes[i][1]);
-    close(pipes[i][0]);
+    		//Close old FDs
+    		close(pipes[i][1]);
+    		close(pipes[i][0]);
 
-    //Execute and handle errors if the function returns
-    execvp(commands[i][0], commands[i]);
-    perror(commands[i][0]);
-    exit(1);
-    }
-  }
+    		//Execute and handle errors if the function returns
+    		execvp(commands[i][0], commands[i]);
+    		perror(commands[i][0]);
+    		exit(1);
+    	}
+  	}	
  
-  //Handle Last Command
-  pid_t pid = fork();
-  if(pid) { // parent
-    if(pipeCount > 0){
-        close(pipes[pipeCount-1][0]);
-        close(pipes[pipeCount-1][1]);
-    }
-    waitpid(pid, NULL, 0);
-  } else { // child
+  	//Handle Last Command
+  	pid_t pid = fork();
+  	if(pid) { // parent
+    	if(pipeCount > 0){
+        	close(pipes[pipeCount-1][0]);
+        	close(pipes[pipeCount-1][1]);
+    	}
+    	waitpid(pid, NULL, 0);
+  	} 
+  	else { // child
 
-    //If there was a pipe, collect last output
-    if(pipeCount > 0){
-        dup2(pipes[pipeCount-1][0], 0);
-        close(pipes[pipeCount-1][0]);
-        close(pipes[pipeCount-1][1]);
-    }
+    	//If there was a pipe, collect last output
+    	if(pipeCount > 0){
 
-    //Execute and handle errors if the function returns
-    execvp(args[lastCommand], &args[lastCommand]);
-    perror(args[lastCommand]);
-    exit(1);
-  }
-}
+        	dup2(pipes[pipeCount-1][0], 0);
+        	close(pipes[pipeCount-1][0]);
+        	close(pipes[pipeCount-1][1]);
+    	}
+
+	    /* new implementation */
+	    // handle "<" function process
+
+	    if(strcmp(args[lastCommand+1],specialToken[0])==0) {
+	      //args[i] = args[i+1];
+	      
+	      int pid = fork();
+	      if(pid<0){
+			perror("Could Not Fork");
+	      }
+	      else if(pid==0){
+			int fd;
+			fd = open(args[lastCommand+2], O_RDONLY);
+			// Check if file exists
+			if(fd<0){ 
+		  		perror("No such file or directory\n");
+			}
+			args[1] = NULL;
+			dup2(fd,0);
+			close(fd);
+			execvp(args[lastCommand],&args[lastCommand]);
+			//pipeCount++;
+	      }
+	      else{
+			waitpid(pid, NULL, 0);
+	      }
+	    }
+	    // handle ">" function process
+	    else if(strcmp(args[lastCommand+1],specialToken[1]) == 0){
+	    	args[lastCommand+1] = NULL;
+	    	pid_t fd;
+	    	fd = open(args[lastCommand+2], O_WRONLY | O_CREAT | O_TRUNC, 0666);
+	    	int pid = fork();
+	    	if(pid<0){
+	    		perror("could not fork");
+	    	}
+	    	else if(pid==0){
+	    		dup2(fd,1);
+	    		close(fd);
+	    		execvp(args[lastCommand],&args[lastCommand]);
+	    	}
+	    	else{
+	    		waitpid(pid,NULL,0);
+	    	}
+
+	    }
+	    /*End Implementation */
+    	else{
+   		//Execute and handle errors if the function returns
+    		execvp(args[lastCommand], &args[lastCommand]);
+    		perror(args[lastCommand]);
+    		exit(1);
+    	}
+  	}
+}	
+
 
 //Based on Nik's implementation handles ctrl+z
 void ctrlz(int sig){
