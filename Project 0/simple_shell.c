@@ -46,6 +46,42 @@ void error(int errno){
 
 char* specialToken[3] = { "<" , ">" , "|" };
 
+
+
+void endCarrots(int lastCommand, char** args, int count){
+	// Base Case: Number of Pipes = 0 
+	int index = count - 2;
+	while(index >= lastCommand){
+	    // handle "<" function process
+	    if(strcmp(args[index],specialToken[0])==0) {
+	      //args[i] = args[i+1];
+	      
+	      
+			int fd;
+			fd = open(args[index+1], O_RDONLY);
+			// Check if file exists
+			if(fd<0){ 
+		  		perror("No such file or directory\n");
+			}
+			args[index] = NULL;
+			dup2(fd,0);
+			close(fd);
+	    }
+	    // handle ">" function process
+	    else if(strcmp(args[index],specialToken[1]) == 0){
+	    	args[index] = NULL;
+	    	pid_t fd;
+	    	fd = open(args[index+1], O_WRONLY | O_CREAT | O_TRUNC, 0666);
+	    	
+	    	dup2(fd,1);
+	    	close(fd);
+	    }
+		index = index-2;
+	}
+	   
+}
+
+
 void runcommand(char* command, char** args, int count) {
 	// Notes from the TA
   	// before fork separate via some kind of tokenizing on <, >, and |
@@ -63,6 +99,7 @@ void runcommand(char* command, char** args, int count) {
   	int pipeCommands = 0;
   	//Index of the last command
   	int lastCommand = 0; 
+
   
   	//Keep Track of number of arguments in the current command
   	int currentCount = 0;
@@ -125,6 +162,17 @@ void runcommand(char* command, char** args, int count) {
     		close(pipes[i][1]);
     		close(pipes[i][0]);
 
+
+    		// Look for '<' or '>' right here to change commands[i]
+    		// find count = numArguments & command index
+    		
+    		
+    		int index = (commands[i] - commands[0] )/ sizeof(char*);
+    		int size = (commands[i+1] - commands[i] - sizeof(char*) ) / sizeof(char*);
+    		endCarrots(index, args, size);
+
+
+
     		//Execute and handle errors if the function returns
     		execvp(commands[i][0], commands[i]);
     		perror(commands[i][0]);
@@ -151,59 +199,14 @@ void runcommand(char* command, char** args, int count) {
         	close(pipes[pipeCount-1][1]);
     	}
 
-	    /* new implementation */
-	    // handle "<" function process
-
-	    if(strcmp(args[lastCommand+1],specialToken[0])==0) {
-	      //args[i] = args[i+1];
-	      
-	      int pid = fork();
-	      if(pid<0){
-			perror("Could Not Fork");
-	      }
-	      else if(pid==0){
-			int fd;
-			fd = open(args[lastCommand+2], O_RDONLY);
-			// Check if file exists
-			if(fd<0){ 
-		  		perror("No such file or directory\n");
-			}
-			args[1] = NULL;
-			dup2(fd,0);
-			close(fd);
-			execvp(args[lastCommand],&args[lastCommand]);
-			//pipeCount++;
-	      }
-	      else{
-			waitpid(pid, NULL, 0);
-	      }
-	    }
-	    // handle ">" function process
-	    else if(strcmp(args[lastCommand+1],specialToken[1]) == 0){
-	    	args[lastCommand+1] = NULL;
-	    	pid_t fd;
-	    	fd = open(args[lastCommand+2], O_WRONLY | O_CREAT | O_TRUNC, 0666);
-	    	int pid = fork();
-	    	if(pid<0){
-	    		perror("could not fork");
-	    	}
-	    	else if(pid==0){
-	    		dup2(fd,1);
-	    		close(fd);
-	    		execvp(args[lastCommand],&args[lastCommand]);
-	    	}
-	    	else{
-	    		waitpid(pid,NULL,0);
-	    	}
-
-	    }
-	    /*End Implementation */
-    	else{
+	    // Handle '<' and '>'
+    	endCarrots(lastCommand, args, count);
+    	
    		//Execute and handle errors if the function returns
-    		execvp(args[lastCommand], &args[lastCommand]);
-    		perror(args[lastCommand]);
-    		exit(1);
-    	}
+    	execvp(args[lastCommand], &args[lastCommand]);
+    	perror(args[lastCommand]);
+    	exit(1);
+    	
   	}
 }	
 
