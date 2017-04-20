@@ -110,7 +110,7 @@ void runcommand(char* command, char** args, int count) {
   
     	if(strcmp(args[i],specialToken[2])==0) {
      		//Create New Pipe
-
+	        if(pipe(pipes[pipeCount]) < 0) error(2);
       		pipeCount++;
 		// indeces of first and last of each subarray
 		j = j+2;
@@ -133,9 +133,9 @@ void runcommand(char* command, char** args, int count) {
     	currentCount++;
 	}
 
-	indeces[j+1]=count-1;
-	printf("start and end of subcommands: %d, %d, %d, %d, %d, %d, %d, %d \n",
-    indeces[0],indeces[1],indeces[2],indeces[3],indeces[4],indeces[5],indeces[6],indeces[7]);
+	indeces[j+1]=count;
+	//printf("start and end of subcommands: %d, %d, %d, %d, %d, %d, %d, %d \n",
+	//indeces[0],indeces[1],indeces[2],indeces[3],indeces[4],indeces[5],indeces[6],indeces[7]);
     /*
     
     Indeces is size 8 to hold at most the information for start,end of each sub-process
@@ -173,12 +173,14 @@ void runcommand(char* command, char** args, int count) {
     	} 
     	else { // child
     
-			int index = (commands[i] - commands[0] )/ sizeof(char*);
-			int size = (*commands[i+1] - *commands[i]);
-			printf("Args[i] %p, args[i+2] %p\n", args[0], args[2]);
-			printf("Commands i %p, commands i+1 %p\n", commands[0], commands[1]);
-			printf("index %d\n", index);
-			printf("size %d\n", size);
+	  //int index = (commands[i] - commands[0] )/ sizeof(char*);
+	                int index = indeces[i*2];
+			int size = indeces[(i*2)+1] - indeces[i*2];
+			//int size = (*commands[i+1] - *commands[i]);
+			//printf("Args[i] %p, args[i+2] %p\n", args[0], args[2]);
+			//printf("Commands i %p, commands i+1 %p\n", commands[0], commands[1]);
+			//printf("index %d\n", index);
+			//printf("size %d\n", size);
 
     		//If argument is not the first command
     		if(i > 0){
@@ -237,7 +239,8 @@ void runcommand(char* command, char** args, int count) {
 
 	    // Handle '<' and '>'
 	    // make
-    	endCarrots(lastCommand, args, count - lastCommand);
+	int lastarg = indeces[(pipeCount*2)+1];
+    	endCarrots(lastCommand, args, lastarg);
     	
    		//Execute and handle errors if the function returns
     	execvp(args[lastCommand], &args[lastCommand]);
