@@ -45,7 +45,7 @@ void error(int errno){
 
 
 char* specialToken[3] = { "<" , ">" , "|" };
-
+int indeces[8] = {0,0,0,0,0,0,0,0};
 
 
 void endCarrots(int lastCommand, char** args, int count){
@@ -55,7 +55,7 @@ void endCarrots(int lastCommand, char** args, int count){
 	    // handle "<" function process
 	    if(strcmp(args[index],specialToken[0])==0) {
 	      //args[i] = args[i+1];
-	      
+	      	
 	      
 			int fd;
 			fd = open(args[index+1], O_RDONLY);
@@ -103,15 +103,21 @@ void runcommand(char* command, char** args, int count) {
   
   	//Keep Track of number of arguments in the current command
   	int currentCount = 0;
+	int j = 0;
   	for (int i = 0; i<count; i++){
 
    		//Handle "|" function process
   
     	if(strcmp(args[i],specialToken[2])==0) {
      		//Create New Pipe
+
       		if(pipe(pipes[pipeCount]) < 0) error(2);
       		pipeCount++;
-
+		// indeces of first and last of each subarray
+		j = j+2;
+		indeces[j-1]= i - 1;
+		indeces[j]= i + 1;
+		printf("start and end of subcommands: %d, %d, %d, %d, %d, %d, %d, %d \n",indeces[0],indeces[1],indeces[2],indeces[3],indeces[4],indeces[5],indeces[6],indeces[7]);
       		//Create Partitioned Commands
       		commands[pipeCommands] = &args[i-currentCount];
       		args[i] = NULL; //Physical Partition
@@ -257,5 +263,4 @@ int main(){
   }
         //printf("shell: "); 
     }
-    return 0;
 }
