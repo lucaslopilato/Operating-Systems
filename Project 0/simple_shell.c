@@ -111,13 +111,11 @@ void runcommand(char* command, char** args, int count) {
     	if(strcmp(args[i],specialToken[2])==0) {
      		//Create New Pipe
 
-      		if(pipe(pipes[pipeCount]) < 0) error(2);
       		pipeCount++;
 		// indeces of first and last of each subarray
 		j = j+2;
 		indeces[j-1]= i - 1;
 		indeces[j]= i + 1;
-		printf("start and end of subcommands: %d, %d, %d, %d, %d, %d, %d, %d \n",indeces[0],indeces[1],indeces[2],indeces[3],indeces[4],indeces[5],indeces[6],indeces[7]);
       		//Create Partitioned Commands
       		commands[pipeCommands] = &args[i-currentCount];
       		args[i] = NULL; //Physical Partition
@@ -135,6 +133,9 @@ void runcommand(char* command, char** args, int count) {
     	currentCount++;
 	}
 
+	indeces[j+1]=count-1;
+	printf("start and end of subcommands: %d, %d, %d, %d, %d, %d, %d, %d \n",
+indeces[0],indeces[1],indeces[2],indeces[3],indeces[4],indeces[5],indeces[6],indeces[7]);
 	//Put last command in command
 	commands[pipeCommands] = &args[lastCommand];
 
