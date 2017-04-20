@@ -135,7 +135,26 @@ void runcommand(char* command, char** args, int count) {
 
 	indeces[j+1]=count-1;
 	printf("start and end of subcommands: %d, %d, %d, %d, %d, %d, %d, %d \n",
-indeces[0],indeces[1],indeces[2],indeces[3],indeces[4],indeces[5],indeces[6],indeces[7]);
+    indeces[0],indeces[1],indeces[2],indeces[3],indeces[4],indeces[5],indeces[6],indeces[7]);
+    /*
+    
+    Indeces is size 8 to hold at most the information for start,end of each sub-process
+    a b c | d e | f g h i | j
+    0   2   4 5   7     10  12
+    
+    so indeces for this is = [0,2,4,5,7,10,12,12]
+    (will store start and end equal for single command)
+    
+    if less than 3 pipes, will store 0s at the end
+    a b | c d | e f g
+    0 1   3 4   6   8
+    indeces = [0,1,3,4,6,8,0,0]
+    
+    */
+
+
+
+	
 	//Put last command in command
 	commands[pipeCommands] = &args[lastCommand];
 
