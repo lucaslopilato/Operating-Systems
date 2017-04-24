@@ -3,12 +3,15 @@
 #include <queue>
 #include <semaphore.h>
 
+#ifndef _RWLOCK_H
+#define _RWLOCK_H_
+
 class RWLock{
-/*private:
+
+/*
 #ifdef RWLOCK
-	pthread_rwlock_t rwlock ;
 #else 
-	pthread_mutex_t lock=PTHREAD_MUTEX_INITIALIZER; 
+	pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER; 
 #endif*/
  
 public:

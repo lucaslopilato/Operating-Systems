@@ -81,7 +81,7 @@ HashMap::put(int key, int value) {
             }
       }
  
-
+// Maybe make boolean to help
 void
 HashMap:: remove(int key) {
             int hash = (key % TABLE_SIZE);
@@ -101,9 +101,11 @@ HashMap:: remove(int key) {
                              LinkedHashEntry *next = entry->getNext();
                               delete entry;
                              prevEntry->setNext(next);
+                             //return true;
                         }
                   }
             }
+            //return false;
       }
  
 HashMap:: ~HashMap() {
