@@ -2,12 +2,22 @@
 //#include<pthread.h>
 #include<semaphore.h>
 
+#ifndef _RWLOCK_H
+#define _RWLOCK_H_
+
 class RWLock{
 private:
 #ifdef RWLOCK
-	pthread_rwlock_t rwlock ;
+
+    int AR = 0; //Number of active readers
+    int WR = 0; //Number of waiting readers
+    int AW = 0; //Number of active writers
+    int WW = 0; //Number of waiting writers
+    pthread_// Condition okToread
+    // Condition okToWrite
+
 #else 
-	pthread_mutex_t lock=PTHREAD_MUTEX_INITIALIZER; 
+	pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER; 
 #endif
  
 public:
