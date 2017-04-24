@@ -1,14 +1,15 @@
 //#include<stdio.h>
-//#include<pthread.h>
-#include<semaphore.h>
+#include <pthread.h>
+#include <queue>
+#include <semaphore.h>
 
 class RWLock{
-private:
+/*private:
 #ifdef RWLOCK
 	pthread_rwlock_t rwlock ;
 #else 
 	pthread_mutex_t lock=PTHREAD_MUTEX_INITIALIZER; 
-#endif
+#endif*/
  
 public:
     	RWLock();
@@ -19,5 +20,9 @@ public:
     // Writer
     	void startWrite();
     	void  doneWrite();
+
+private:
+    std::queue<pthread_t*> readers, writers;
+    bool locked;
 };
 
