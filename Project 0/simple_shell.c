@@ -12,7 +12,7 @@
 #define MAX_LINE_LENGTH 512
 
 //CHANGE TO 0 FOR RELEASE
-#define DEBUG 1
+
 
 // Simple implementation for Shell command
 // Assume all arguments are seperated by space
@@ -27,46 +27,27 @@
  *   shell: exit
 **/
 
-//Simple Debugging Function to track errors
-void error(int errno){
-  if(DEBUG){
-    printf("Error detected: ");
-    switch(errno){
-      case 1: printf("greater than three pipes requested\n"); break;
-      case 2: printf("pipe creation failed\n"); break;
-      case 3: printf("Failed to dup STDIN\n"); break;
-      case 4: printf("Failed to dup STDOUT\n"); break;
-      default: printf("unspecified error\n");
-    }
-  }
-
-  exit(errno);
-}
 
 
 char* specialToken[3] = { "<" , ">" , "|" };
 int indeces[8] = {0,0,0,0,0,0,0,0};
 
 
-void endCarrots(int lastCommand, char** args, int count){
-	// Base Case: Number of Pipes = 0 
-	int index = count - 2;
-	while(index >= lastCommand){
+void endCarrots(int indexOfCommand, char** args, int size){ 
+
+	int index = size - 1;
+	while(index >= indexOfCommand){
 	    // handle "<" function process
 	    if(strcmp(args[index],specialToken[0])==0) {
-	      //args[i] = args[i+1];
-	      	
-	      
-			int fd;
-			fd = open(args[index+1], O_RDONLY);
-			// Check if file exists
-			if(fd<0){ 
-		  		perror("No such file or directory\n");
-			}
-			args[index] = NULL;
-			dup2(fd,0);
-			close(fd);
-	    }
+		    int fd;
+		    fd = open(args[index+1], O_RDONLY);
+		    // Check if file exists
+		    if(fd<0) 
+		        perror("No such file or directory\n");
+		    args[index] = NULL;
+		    dup2(fd,0);
+		    close(fd);
+        }
 	    // handle ">" function process
 	    else if(strcmp(args[index],specialToken[1]) == 0){
 	    	args[index] = NULL;
@@ -110,7 +91,7 @@ void runcommand(char* command, char** args, int count) {
   
     	if(strcmp(args[i],specialToken[2])==0) {
      		//Create New Pipe
-	        if(pipe(pipes[pipeCount]) < 0) error(2);
+	        if(pipe(pipes[pipeCount]) < 0) perror("Pipe Creation Failed");
       		pipeCount++;
 		// indeces of first and last of each subarray
 		j = j+2;
@@ -133,7 +114,7 @@ void runcommand(char* command, char** args, int count) {
     	currentCount++;
 	}
 
-	indeces[j+1]=count;
+	indeces[j+1]=count-1;
 	//printf("start and end of subcommands: %d, %d, %d, %d, %d, %d, %d, %d \n",
 	//indeces[0],indeces[1],indeces[2],indeces[3],indeces[4],indeces[5],indeces[6],indeces[7]);
     /*
@@ -159,7 +140,7 @@ void runcommand(char* command, char** args, int count) {
 	commands[pipeCommands] = &args[lastCommand];
 
   	//Ensure Proper Amount of Pipes
-  	if(pipeCount > 3) error(1);
+  	if(pipeCount > 3) perror("Greater than 3 pipes Requested \n");
 
   	//Execute Piped Commands
   	for(int i=0; i<pipeCount; i++){
