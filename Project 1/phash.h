@@ -3,7 +3,7 @@
  *http://www.algolist.net/Data_structures/Hash_table/Chaining
  *
  **/
-
+#include "rwlock.h"
 
 class LinkedHashEntry {
 private:

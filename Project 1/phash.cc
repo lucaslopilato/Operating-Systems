@@ -2,35 +2,125 @@
  * Code is based on
  *http://www.algolist.net/Data_structures/Hash_table/Chaining
  *
- * Course Grain Locking
  **/
 
 
-class LinkedHashEntry {
-private:
-      int key;
-      int value;
-      LinkedHashEntry *next;
-public:
-      LinkedHashEntry(int key, int value); 
-      int getKey(); 
-      int getValue();
-      void setValue(int value);
+#include <pthread.h>
+#include <iostream>
+#include "phash.h"
+#include "rwlock.h"
+
+LinkedHashEntry:: LinkedHashEntry(int key, int value) {
+            this->key = key;
+            this->value = value;
+            this->next = NULL;
+      }
+
+int 
+LinkedHashEntry:: getKey() {
+            return key;
+      }
+int 
+LinkedHashEntry:: getValue() {
+            return value;
+      }
  
-      LinkedHashEntry *getNext(); 
-      void setNext(LinkedHashEntry *next); 
-};
+void 
+LinkedHashEntry:: setValue(int value) {
+            this->value = value;
+      }
+ 
+
+LinkedHashEntry * 
+LinkedHashEntry:: getNext() {
+            return next;
+      }
+ 
+void 
+LinkedHashEntry:: setNext(LinkedHashEntry *next) {
+            this->next = next;
+      }
 
 
-class HashMap {
-private:
-      LinkedHashEntry **table;
-public:
-      HashMap(); 
-      int get(int key); 
-      void put(int key, int value); 
-      void remove(int key); 
-      ~HashMap(); 
-};
+const int TABLE_SIZE = 128;
+ 
+HashMap::HashMap() {
+            table = new LinkedHashEntry*[TABLE_SIZE];
+            for (int i = 0; i < TABLE_SIZE; i++)
+                  table[i] = NULL;
+                  this->rwlock = RWLock();
+      }
+
+int 
+HashMap:: get(int key) {
+            int hash = (key % TABLE_SIZE);
+            if (table[hash] == NULL)
+                  return -1;
+            else {
+                  LinkedHashEntry *entry = table[hash];
+                  while (entry != NULL && entry->getKey() != key)
+                        entry = entry->getNext();
+                  if (entry == NULL)
+                        return -1;
+                  else
+                        return entry->getValue();
+            }
+      }
+ 
+void 
+HashMap::put(int key, int value) {
+            int hash = (key % TABLE_SIZE);
+            if (table[hash] == NULL)
+                  table[hash] = new LinkedHashEntry(key, value);
+            else {
+                  LinkedHashEntry *entry = table[hash];
+                  while (entry->getNext() != NULL)
+                        entry = entry->getNext();
+                  if (entry->getKey() == key)
+                        entry->setValue(value);
+                  else
+                        entry->setNext(new LinkedHashEntry(key, value));
+            }
+      }
+ 
+
+void
+HashMap:: remove(int key) {
+            int hash = (key % TABLE_SIZE);
+            if (table[hash] != NULL) {
+                  LinkedHashEntry *prevEntry = NULL;
+                  LinkedHashEntry *entry = table[hash];
+                  while (entry->getNext() != NULL && entry->getKey() != key) {
+                        prevEntry = entry;
+                        entry = entry->getNext();
+                  }
+                  if (entry->getKey() == key) {
+                        if (prevEntry == NULL) {
+                             LinkedHashEntry *nextEntry = entry->getNext();
+                             delete entry;
+                             table[hash] = nextEntry;
+                        } else {
+                             LinkedHashEntry *next = entry->getNext();
+                              delete entry;
+                             prevEntry->setNext(next);
+                        }
+                  }
+            }
+      }
+ 
+HashMap:: ~HashMap() {
+            for (int i = 0; i < TABLE_SIZE; i++)
+                  if (table[i] != NULL) {
+                        LinkedHashEntry *prevEntry = NULL;
+                        LinkedHashEntry *entry = table[i];
+                        while (entry != NULL) {
+                             prevEntry = entry;
+                             entry = entry->getNext();
+                             delete prevEntry;
+                        }
+                  }
+            delete[] table;
+      }
+
 
 
