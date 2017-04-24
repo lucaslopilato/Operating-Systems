@@ -2,6 +2,7 @@
  * Code is based on
  *http://www.algolist.net/Data_structures/Hash_table/Chaining
  *
+ * Course Grain Locking
  **/
 
 
