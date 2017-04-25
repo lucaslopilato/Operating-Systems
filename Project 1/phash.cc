@@ -46,29 +46,43 @@ const int TABLE_SIZE = 128;
  
 HashMap::HashMap() {
             table = new LinkedHashEntry*[TABLE_SIZE];
+            // Set Lock
+            this->rwlock = RWLock();
             for (int i = 0; i < TABLE_SIZE; i++)
                   table[i] = NULL;
-                  this->rwlock = RWLock();
       }
 
 int 
-HashMap:: get(int key) {
+HashMap::get(int key) {
+            // Begin Reading through the hash table for value at key given
+            // Lock the table so that no writes occur when obtaining values
+            this->rwlock.startRead();
             int hash = (key % TABLE_SIZE);
-            if (table[hash] == NULL)
+            if (table[hash] == NULL){
+                  this->doneRead(); // Nothing to look at so unlock
                   return -1;
+            }
             else {
                   LinkedHashEntry *entry = table[hash];
                   while (entry != NULL && entry->getKey() != key)
                         entry = entry->getNext();
-                  if (entry == NULL)
+
+                  // Finished loop through the hashtable element so unlock and return result
+                  if (entry == NULL){
+                        this->rwlock.doneRead();
                         return -1;
-                  else
+                  }
+                  else{
+                        this->rwlock.doneRead();
                         return entry->getValue();
+                  }
             }
       }
  
 void 
 HashMap::put(int key, int value) {
+            // Begin to write to the hashtable so we need to lock out readers
+            this->rwlock.startWrite();
             int hash = (key % TABLE_SIZE);
             if (table[hash] == NULL)
                   table[hash] = new LinkedHashEntry(key, value);
@@ -81,11 +95,15 @@ HashMap::put(int key, int value) {
                   else
                         entry->setNext(new LinkedHashEntry(key, value));
             }
+            // done with updating the table element so unlock
+            this->rwlock.doneWrite();
       }
  
 
 void
 HashMap:: remove(int key) {
+            // Begin to write(remove) elements from hashtable so lock out readers
+            this->rwlock.startWrite();
             int hash = (key % TABLE_SIZE);
             if (table[hash] != NULL) {
                   LinkedHashEntry *prevEntry = NULL;
@@ -99,13 +117,16 @@ HashMap:: remove(int key) {
                              LinkedHashEntry *nextEntry = entry->getNext();
                              delete entry;
                              table[hash] = nextEntry;
+                             this->rwlock.doneWrite(); // unlock
                         } else {
                              LinkedHashEntry *next = entry->getNext();
-                              delete entry;
+                             delete entry;
                              prevEntry->setNext(next);
+                             this->rwlock.doneWrite(); // unlock
                         }
                   }
             }
+            this->rwlock.doneWrite(); // unlock
       }
  
 HashMap:: ~HashMap() {
@@ -121,6 +142,3 @@ HashMap:: ~HashMap() {
                   }
             delete[] table;
       }
-
-
-
