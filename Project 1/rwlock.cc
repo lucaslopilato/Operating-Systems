@@ -54,6 +54,9 @@ void RWLock::startRead(){
         while(AW != 0)
             pthread_cond_wait(&okToRead, &locks[2]);
 
+        //Release Active Writers
+        pthread_mutex_unlock(&locks[2]);
+
         //Acquire lock for AR
         pthread_mutex_lock(&locks[0]);
         AR++;
@@ -77,13 +80,19 @@ void RWLock::doneRead(){
         pthread_mutex_lock(&locks[0]);
         AR--;
 
-        if(AR == 0){
+        //Acquire Active Writers
+        pthread_mutex_lock(&locks[2]);
+
+        if(AR + AW == 0){
             pthread_cond_signal(&okToWrite);
+        }
+        else if(AW == 0){
             pthread_cond_signal(&okToRead);
         }
 
         //Release Active Readers
         pthread_mutex_unlock(&locks[0]);
+        pthread_mutex_unlock(&locks[2]);
 
     #else
         pthread_mutex_unlock(&this->lock);
@@ -99,21 +108,17 @@ void RWLock::startWrite(){
         pthread_mutex_unlock(&locks[3]);
 
         //Acquire Active Writers
-        pthread_mutex_lock(&locks[2]);
-        while(AW != 0)
-            pthread_cond_wait(&okToWrite, &locks[2]);
-
-        //Acquire Active Readers
         pthread_mutex_lock(&locks[0]);
-        while(AR != 0)
-            pthread_cond_wait(&okToWrite, &locks[0]);
+        pthread_mutex_lock(&locks[2]);
+        while(AW + AR != 0)
+            pthread_cond_wait(&okToWrite, &locks[2]);
 
         //Increment Active Writers
         AW++;
 
         //Unlock Acquired Locks
-        pthread_mutex_unlock(&locks[2]);
         pthread_mutex_unlock(&locks[0]);
+        pthread_mutex_unlock(&locks[2]);
 
         //Exit Queue
         pthread_mutex_lock(&locks[3]);
@@ -131,13 +136,19 @@ void RWLock::doneWrite(){
         pthread_mutex_lock(&locks[2]);
         AW--;
 
-        if(AW == 0){
+        //Active Readers
+        pthread_mutex_lock(&locks[0]);
+
+        if(AW + AR == 0){
             pthread_cond_signal(&okToWrite);
+        }
+        else if(AW == 0){
             pthread_cond_signal(&okToRead);
         }
 
-        //Release Active Readers
+        //Release Active Readers & Writers
         pthread_mutex_unlock(&locks[2]);
+        pthread_mutex_unlock(&locks[0]);
 
     #else
         pthread_mutex_unlock(&this->lock);
