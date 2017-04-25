@@ -59,7 +59,7 @@ HashMap::get(int key) {
             this->rwlock.startRead();
             int hash = (key % TABLE_SIZE);
             if (table[hash] == NULL){
-                  this->doneRead(); // Nothing to look at so unlock
+                  this->rwlock.doneRead(); // Nothing to look at so unlock
                   return -1;
             }
             else {
