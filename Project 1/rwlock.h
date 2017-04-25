@@ -24,8 +24,6 @@ public:
     	void  doneWrite();
 
 private:
-    void signal();
-
     #ifdef RWLOCK
         //Counter Locks
         pthread_mutex_t lock;

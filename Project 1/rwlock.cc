@@ -45,10 +45,8 @@ void RWLock::startRead(){
         WR++;
 
         //Wait until there are no active or waiting writers
-        while((AW + WW) != 0){
-            //printf("AW:%d, WW:%d\n", AW, WW);
+        while(WW != 0 && AW != 0)
             pthread_cond_wait(&okToRead, &lock);
-        }
 
         AR++;
 
@@ -68,7 +66,11 @@ void RWLock::doneRead(){
         pthread_mutex_lock(&lock);
         AR--;
 
-        signal();
+        //Signal
+        if(WW > 0 && AR == 0 && AW == 0)
+            pthread_cond_signal(&okToWrite);
+        else if(AW == 0)
+            pthread_cond_signal(&okToRead);
 
         //Release Active Readers
         pthread_mutex_unlock(&lock);
@@ -85,10 +87,8 @@ void RWLock::startWrite(){
         pthread_mutex_lock(&lock);
         WW++;
 
-        while((AW + AR) != 0){
-            //printf("AW:%d, AR:%d\n", AW, AR);
+        while(AW != 0 && AR != 0)
             pthread_cond_wait(&okToWrite, &lock);
-        }
 
         //Increment Active Writers
         AW++;
@@ -101,6 +101,7 @@ void RWLock::startWrite(){
         pthread_mutex_lock(&this->lock);
     #endif
 }
+
 void RWLock::doneWrite(){
     #ifdef RWLOCK
 
@@ -108,30 +109,14 @@ void RWLock::doneWrite(){
         pthread_mutex_lock(&lock);
         AW--;
 
-        signal();
+        if(WW > 0 && AR == 0 && AW == 0)
+            pthread_cond_signal(&okToWrite);
+        else if(AW == 0)
+            pthread_cond_signal(&okToRead);
 
         pthread_mutex_unlock(&lock);        
 
     #else
         pthread_mutex_unlock(&this->lock);
-    #endif
-}
-
-//Signal other threads
-void RWLock::signal(){
-    #ifdef RWLOCK
-
-    if(WW > 0 && (AW + AR) == 0){
-        //printf("Signalling ok to write\n");
-        pthread_cond_signal(&okToWrite);
-    }
-    else if(AW == 0){
-        //printf("Signalling ok to read\n");
-        pthread_cond_signal(&okToRead);
-    }
-
-    #else
-    //printf("Not working\n");
-
     #endif
 }
