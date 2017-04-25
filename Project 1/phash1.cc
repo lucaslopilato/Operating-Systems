@@ -2,35 +2,146 @@
  * Code is based on
  *http://www.algolist.net/Data_structures/Hash_table/Chaining
  *
- * Fine Grain Locking With Mutex Only
  **/
 
 
-class LinkedHashEntry {
-private:
-      int key;
-      int value;
-      LinkedHashEntry *next;
-public:
-      LinkedHashEntry(int key, int value); 
-      int getKey(); 
-      int getValue();
-      void setValue(int value);
+#include <pthread.h>
+#include <iostream>
+#include "phash.h"
+#include "rwlock.h"
+
+LinkedHashEntry:: LinkedHashEntry(int key, int value) {
+            this->key = key;
+            this->value = value;
+            this->next = NULL;
+      }
+
+int 
+LinkedHashEntry:: getKey() {
+            return key;
+      }
+int 
+LinkedHashEntry:: getValue() {
+            return value;
+      }
  
-      LinkedHashEntry *getNext(); 
-      void setNext(LinkedHashEntry *next); 
-};
+void 
+LinkedHashEntry:: setValue(int value) {
+            this->value = value;
+      }
+ 
+
+LinkedHashEntry * 
+LinkedHashEntry:: getNext() {
+            return next;
+      }
+ 
+void 
+LinkedHashEntry:: setNext(LinkedHashEntry *next) {
+            this->next = next;
+      }
 
 
-class HashMap {
-private:
-      LinkedHashEntry **table;
-public:
-      HashMap(); 
-      int get(int key); 
-      void put(int key, int value); 
-      void remove(int key); 
-      ~HashMap(); 
-};
+const int TABLE_SIZE = 128;
+ 
+HashMap::HashMap() {
+            table = new LinkedHashEntry*[TABLE_SIZE];
+            // make an array of rwlocks for fine grained implementation
+            rwlocksArray = new RWLock[TABLE_SIZE];
+            for (int i = 0; i < TABLE_SIZE; i++){
+                  table[i] = NULL;
+                  rwlocksArray[i] = RWLock();
+            }
+      }
+
+int 
+HashMap::get(int key) {
+            int hash = (key % TABLE_SIZE);
+            rwlocksArray[hash].startRead(); //Lock the specific index of the hashtable 
+                                            // (allows access to the rest of the table)
+            if (table[hash] == NULL){
+                  rwlocksArray[hash].doneRead(); // Nothing to look at so unlock
+                  return -1;
+            }
+            else {
+                  LinkedHashEntry *entry = table[hash];
+                  while (entry != NULL && entry->getKey() != key)
+                        entry = entry->getNext();
+
+                  // Finished loop through the hashtable element so unlock and return result
+                  if (entry == NULL){
+                        rwlocksArray[hash].doneRead();
+                        return -1;
+                  }
+                  else{
+                        rwlocksArray[hash].doneRead();
+                        return entry->getValue();
+                  }
+            }
+      }
+ 
+void 
+HashMap::put(int key, int value) {
+            // Begin to write to the hashtable so we need to lock out readers
+            int hash = (key % TABLE_SIZE);
+            rwlocksArray[hash].startWrite(); // only lock the one element
+            if (table[hash] == NULL)
+                  table[hash] = new LinkedHashEntry(key, value);
+            else {
+                  LinkedHashEntry *entry = table[hash];
+                  while (entry->getNext() != NULL)
+                        entry = entry->getNext();
+                  if (entry->getKey() == key)
+                        entry->setValue(value);
+                  else
+                        entry->setNext(new LinkedHashEntry(key, value));
+            }
+            // done with updating the table element so unlock
+            rwlocksArray[hash].doneWrite();
+      }
+ 
+
+void
+HashMap:: remove(int key) {
+            // Begin to write(remove) elements from hashtable so lock out readers
+            int hash = (key % TABLE_SIZE);
+            rwlocksArray[hash].startWrite(); // only lock one element
+            if (table[hash] != NULL) {
+                  LinkedHashEntry *prevEntry = NULL;
+                  LinkedHashEntry *entry = table[hash];
+                  while (entry->getNext() != NULL && entry->getKey() != key) {
+                        prevEntry = entry;
+                        entry = entry->getNext();
+                  }
+                  if (entry->getKey() == key) {
+                        if (prevEntry == NULL) {
+                             LinkedHashEntry *nextEntry = entry->getNext();
+                             delete entry;
+                             table[hash] = nextEntry;
+                             rwlocksArray[hash].doneWrite(); // unlock
+                        } else {
+                             LinkedHashEntry *next = entry->getNext();
+                             delete entry;
+                             prevEntry->setNext(next);
+                             rwlocksArray[hash].doneWrite(); // unlock
+                        }
+                  }
+            }
+            rwlocksArray[hash].doneWrite(); // unlock
+      }
+ 
+HashMap:: ~HashMap() {
+            for (int i = 0; i < TABLE_SIZE; i++)
+                  if (table[i] != NULL) {
+                        LinkedHashEntry *prevEntry = NULL;
+                        LinkedHashEntry *entry = table[i];
+                        while (entry != NULL) {
+                             prevEntry = entry;
+                             entry = entry->getNext();
+                             delete prevEntry;
+                        }
+                  }
+            delete[] table;
+}
 
 
