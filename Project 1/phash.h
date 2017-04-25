@@ -25,6 +25,7 @@ class HashMap {
 private:
       LinkedHashEntry **table;
       RWLock rwlock;
+      RWLock* rwlockArray;
 public:
       HashMap(); 
       int get(int key); 
