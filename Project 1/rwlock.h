@@ -1,4 +1,4 @@
-//#include<stdio.h>
+#include <stdio.h>
 #include <pthread.h>
 #include <semaphore.h>
 
@@ -24,9 +24,11 @@ public:
     	void  doneWrite();
 
 private:
+    void signal();
+
     #ifdef RWLOCK
         //Counter Locks
-        pthread_mutex_t locks[4];
+        pthread_mutex_t lock;
 
         int AR; //Number of Active Readers
         int WR; //Number of Waiting Readers
@@ -35,6 +37,7 @@ private:
 
         //Condition Vars
         pthread_cond_t okToRead, okToWrite;
+
     #else 
         pthread_mutex_t lock=PTHREAD_MUTEX_INITIALIZER; 
     #endif

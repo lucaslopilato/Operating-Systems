@@ -117,12 +117,10 @@ HashMap:: remove(int key) {
                              LinkedHashEntry *nextEntry = entry->getNext();
                              delete entry;
                              table[hash] = nextEntry;
-                             this->rwlock.doneWrite(); // unlock
                         } else {
                              LinkedHashEntry *next = entry->getNext();
                              delete entry;
                              prevEntry->setNext(next);
-                             this->rwlock.doneWrite(); // unlock
                         }
                   }
             }

@@ -118,12 +118,10 @@ HashMap:: remove(int key) {
                              LinkedHashEntry *nextEntry = entry->getNext();
                              delete entry;
                              table[hash] = nextEntry;
-                             rwlocksArray[hash].doneWrite(); // unlock
                         } else {
                              LinkedHashEntry *next = entry->getNext();
                              delete entry;
                              prevEntry->setNext(next);
-                             rwlocksArray[hash].doneWrite(); // unlock
                         }
                   }
             }
