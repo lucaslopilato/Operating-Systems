@@ -104,6 +104,7 @@ void RWLock::startWrite(){
             pthread_cond_wait(&okToWrite, &locks[2]);
 
         //Acquire Active Readers
+        pthread_mutex_lock(&locks[0]);
         while(AR != 0)
             pthread_cond_wait(&okToWrite, &locks[0]);
 
