@@ -1,10 +1,9 @@
 //#include<stdio.h>
 #include <pthread.h>
-#include <queue>
 #include <semaphore.h>
 
-#ifndef _RWLOCK_H
-#define _RWLOCK_H_
+#ifndef RWLOCK_H
+#define RWLOCK_H
 
 class RWLock{
 
@@ -25,7 +24,22 @@ public:
     	void  doneWrite();
 
 private:
-    std::queue<pthread_t*> readers, writers;
-    bool locked;
+    #ifdef RWLOCK
+        //Counter Locks
+        pthread_mutex_t locks[4];
+
+        int AR; //Number of Active Readers
+        int WR; //Number of Waiting Readers
+        int AW; //Number of Active Writers
+        int WW; //Number of Waiting Writers
+
+        //Condition Vars
+        pthread_cond_t okToRead, okToWrite;
+    #else 
+        pthread_mutex_t lock=PTHREAD_MUTEX_INITIALIZER; 
+    #endif
 };
+
+#endif //RWLOCK_H
+
 
