@@ -9,9 +9,10 @@
 #include "rwlock.h"
 
 RWLock::RWLock(){
+    //Initialize Lock for Read/Write counters
+    //pthread_mutex_init(&this->lock, NULL);
     #ifdef RWLOCK
-        //Initialize Lock for Read/Write counters
-        //pthread_mutex_init(&this->lock, NULL);
+
 
         //Initialize Counter Variables
         this->AR = 0; //locks[0]
@@ -48,14 +49,19 @@ void RWLock::startRead(){
         //Wait until there are no active or waiting writers
         while(WW != 0 && AW != 0){
             this->WR++;
-            pthread_cond_wait(&okToRead, &lock);
+            printf("read lock wait\n");
+            mem();
+
+            pthread_cond_wait(&this->okToRead, &this->lock);
             this->WR--;
         }
 
-        AR++;
+        this->AR++;
 
         //WR--;
-        pthread_mutex_unlock(&lock);
+        printf("Read start\n");
+        mem();
+        pthread_mutex_unlock(&this->lock);
 
     //#else
     //    pthread_mutex_lock(&this->lock);
@@ -68,21 +74,22 @@ void RWLock::doneRead(){
     #ifdef RWLOCK
 
         //Decrement Number of readers
-        pthread_mutex_lock(&lock);
-        AR--;
+        pthread_mutex_lock(&this->lock);
+        this->AR--;
 
         //Signal
-        if(WW > 0 && AR == 0 ) // AW == 0)  //don't need active writers if some are waiting
-            pthread_cond_signal(&okToWrite);
-        //else if(AW == 0)
-        //    pthread_cond_signal(&okToRead); //writer priority
+        if(this->AR == 0) // AW == 0)  //don't need active writers if some are waiting
+            pthread_cond_signal(&this->okToWrite);
+        else if(this->AW == 0)
+            pthread_cond_signal(&this->okToRead); //writer priority
 
         //Release Active Readers
-        pthread_mutex_unlock(&this->lock);
-
-    #else
-        pthread_mutex_unlock(&this->lock);
+        printf("Read Lock Unlocked\n");
+        mem();
     #endif
+
+    pthread_mutex_unlock(&this->lock);
+
 }
 
 void RWLock::startWrite(){
@@ -93,18 +100,23 @@ void RWLock::startWrite(){
         //pthread_mutex_lock(&lock);
         //WW++;
 
-        while(AW != 0 && AR != 0){
-            WW++;
-            pthread_cond_wait(&okToWrite, &lock);
-            WW--;
+        while(this->AW != 0 && this->AR != 0){
+            this->WW++;
+            printf("write wait\n");
+            mem();
+            pthread_cond_wait(&this->okToWrite, &this->lock);
+            this->WW--;
         }
 
         //Increment Active Writers
-        AW++;
+        this->AW += 1;
+
+        printf("write lock acquired\n");
+        mem();
 
         //Exit Queue
         //WW--;
-        pthread_mutex_unlock(&lock);
+        pthread_mutex_unlock(&this->lock);
 
     //#else
     //    pthread_mutex_lock(&this->lock);
@@ -115,17 +127,24 @@ void RWLock::doneWrite(){
     #ifdef RWLOCK
 
         //Decrement Number of Active Writers
-        pthread_mutex_lock(&lock);
-        AW--;
+        pthread_mutex_lock(&this->lock);
+        this->AW -= 1;
 
-        if(WW > 0 )// && AR == 0 && AW == 0) // you finished writing no other writers or readers
-            pthread_cond_signal(&okToWrite);
-        else if(WR > 0)//(AW == 0) // no waiting writers, let them read
-            pthread_cond_broadcast(&okToRead);
-
-        pthread_mutex_unlock(&lock);        
-
-    #else
-        pthread_mutex_unlock(&this->lock);
+        if(this->WW > 0 )// && AR == 0 && AW == 0) // you finished writing no other writers or readers
+            pthread_cond_signal(&this->okToWrite);
+        else if(this->WR > 0)//(AW == 0) // no waiting writers, let them read
+            pthread_cond_broadcast(&this->okToRead);
+        
+        printf("write unlock\n"); 
+        mem();   
     #endif
+        
+    pthread_mutex_unlock(&this->lock);
 }
+
+#ifdef RWLOCK
+void RWLock::mem(){
+    printf("AR: %d, WR: %d, AW: %d, WW: %d\n", AR, WR, AW, WW);
+
+}
+#endif

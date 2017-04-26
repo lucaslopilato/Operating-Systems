@@ -29,7 +29,6 @@ phashfinerw: phash1.cc rwlock.cc ptest.cc
 
 dcoarse: phash1.cc rwlock.cc ptest-1a.cc
 	$(CC) -o $@ $^ $(FLAGS4)
-	./dcoarse 100 100 4 3
 
 # dfine: phash1.cc rwlock.cc ptest-1a.cc
 # 	$(CC) -o $@ $^ $(FLAGS4)
@@ -55,5 +54,5 @@ run4:
 
 
 clean:
-	rm *.o phashchain phashcoarse phashcoarserw  phashfine phashfinerw
+	rm *.o dcoarse phashchain phashcoarse phashcoarserw  phashfine phashfinerw
 

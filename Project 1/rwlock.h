@@ -2,8 +2,8 @@
 #include <pthread.h>
 #include <semaphore.h>
 
-#ifndef RWLOCK_H_
-#define RWLOCK_H_
+#ifndef _RWLOCK_H_
+#define _RWLOCK_H_
 
 class RWLock{
 
@@ -25,7 +25,7 @@ public:
 
 private:
     #ifdef RWLOCK
-        //Counter Locks
+        void mem();        //Counter Locks
         //pthread_mutex_t lock;
 
         int AR; //Number of Active Readers
@@ -37,7 +37,7 @@ private:
         pthread_cond_t okToRead = PTHREAD_COND_INITIALIZER; 
         pthread_cond_t okToWrite = PTHREAD_COND_INITIALIZER;
     #endif
-        pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER; 
+        pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
     
 };
 
