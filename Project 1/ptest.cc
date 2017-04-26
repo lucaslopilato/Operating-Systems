@@ -55,7 +55,6 @@ void test1(HashMap *htable, int n, int k, int w){
 
 HashMap hash;
 int NUMKEYS=1000;
-#define NumberofThread 1000
 pthread_t thr[NumberofThread];
 
 void *tfunc(void *arg){

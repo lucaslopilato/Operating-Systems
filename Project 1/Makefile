@@ -8,7 +8,7 @@ FLAGS2  = -O -lpthread -DRWLOCK
 FLAGS3  = -O -lpthread -DFINEGRAIN
 FLAGS4  = -O -lpthread -DFINEGRAIN -DRWLOCK 
 
-all:  phashchain phashcoarse phashcoarserw  phashfine phashfinerw
+all:  phashchain phashcoarse phashcoarserw  phashfine phashfinerw dcoarse
 #all:  hashchain phashchain phashcoarse phashcoarserw  phashfine phashfinerw
 
 
@@ -26,6 +26,14 @@ phashfine: phash1.cc rwlock.cc ptest.cc
 
 phashfinerw: phash1.cc rwlock.cc ptest.cc 
 	$(CC) -o $@ $^ $(FLAGS4)
+
+dcoarse: phash1.cc rwlock.cc ptest-1a.cc
+	$(CC) -o $@ $^ $(FLAGS4)
+	./dcoarse 100 100 4 3
+
+# dfine: phash1.cc rwlock.cc ptest-1a.cc
+# 	$(CC) -o $@ $^ $(FLAGS4)
+# 	./dfine 100 100 1 3
 
 run: 
 	./phash
@@ -47,5 +55,5 @@ run4:
 
 
 clean:
-	rm *.o hashchain phashchain phashcoarse phashcoarserw  phashfine phashfinerw
+	rm *.o phashchain phashcoarse phashcoarserw  phashfine phashfinerw
 
