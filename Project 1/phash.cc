@@ -7,6 +7,7 @@
 
 #include <pthread.h>
 #include <iostream>
+#include <unistd.h>
 #include "phash.h"
 #include "rwlock.h"
 
@@ -47,15 +48,16 @@ const int TABLE_SIZE = 128;
 HashMap::HashMap() {
             table = new LinkedHashEntry*[TABLE_SIZE];
             // Set Lock
-            this->rwlock = RWLock();
             for (int i = 0; i < TABLE_SIZE; i++)
                   table[i] = NULL;
+            this->rwlock = RWLock();
       }
 
 int 
 HashMap::get(int key) {
             // Begin Reading through the hash table for value at key given
             // Lock the table so that no writes occur when obtaining values
+            usleep(1);
             this->rwlock.startRead();
             int hash = (key % TABLE_SIZE);
             if (table[hash] == NULL){
@@ -117,14 +119,17 @@ HashMap:: remove(int key) {
                              LinkedHashEntry *nextEntry = entry->getNext();
                              delete entry;
                              table[hash] = nextEntry;
+                    
                         } else {
                              LinkedHashEntry *next = entry->getNext();
                              delete entry;
                              prevEntry->setNext(next);
+                             
                         }
                   }
             }
             this->rwlock.doneWrite(); // unlock
+          
       }
  
 HashMap:: ~HashMap() {

@@ -7,6 +7,7 @@
 
 #include <pthread.h>
 #include <iostream>
+#include <unistd.h>
 #include "phash.h"
 #include "rwlock.h"
 
@@ -50,12 +51,16 @@ HashMap::HashMap() {
             rwlocksArray = new RWLock[TABLE_SIZE];
             for (int i = 0; i < TABLE_SIZE; i++){
                   table[i] = NULL;
-                  rwlocksArray[i] = RWLock();
             }
+            for(int i = 0; i < TABLE_SIZE; i++){      
+              rwlocksArray[i] = RWLock();
+            }
+            
       }
 
 int 
 HashMap::get(int key) {
+            usleep(1);
             int hash = (key % TABLE_SIZE);
             rwlocksArray[hash].startRead(); //Lock the specific index of the hashtable 
                                             // (allows access to the rest of the table)
@@ -126,6 +131,7 @@ HashMap:: remove(int key) {
                   }
             }
             rwlocksArray[hash].doneWrite(); // unlock
+            
       }
  
 HashMap:: ~HashMap() {
@@ -140,6 +146,7 @@ HashMap:: ~HashMap() {
                         }
                   }
             delete[] table;
+            delete[] rwlocksArray;
 }
 
 

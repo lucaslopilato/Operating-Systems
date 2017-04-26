@@ -9,30 +9,20 @@
 #include "rwlock.h"
 
 RWLock::RWLock(){
-    //Initialize Lock for Read/Write counters
-    //pthread_mutex_init(&this->lock, NULL);
+    
     #ifdef RWLOCK
-
-
         //Initialize Counter Variables
         this->AR = 0; //locks[0]
         this->WR = 0; //locks[1]
         this->AW = 0; //locks[2]
         this->WW = 0; //locks[3]
 
-        //Initialize Condition Variables
-        //pthread_cond_init(&this->okToRead, NULL);
-        //pthread_cond_init(&this->okToWrite, NULL);
     #endif
-        //pthread_mutex_init(&this->lock, NULL);
-    
 }
 
 RWLock::~RWLock(){
     
     #ifdef RWLOCK
-        //pthread_mutex_destroy(&this->lock);
-
         pthread_cond_destroy(&this->okToRead);
         pthread_cond_destroy(&this->okToWrite);
     #endif
@@ -42,10 +32,7 @@ RWLock::~RWLock(){
 void RWLock::startRead(){
     pthread_mutex_lock(&this->lock);
     #ifdef RWLOCK
-        //Enter Queue
-        //pthread_mutex_lock(&lock);
-        //WR++;
-
+      
         //Wait until there are no active or waiting writers
         while(WW != 0 && AW != 0){
             this->WR++;
@@ -58,13 +45,10 @@ void RWLock::startRead(){
 
         this->AR++;
 
-        //WR--;
         printf("Read start\n");
         mem();
         pthread_mutex_unlock(&this->lock);
 
-    //#else
-    //    pthread_mutex_lock(&this->lock);
     #endif
 
 }
@@ -96,10 +80,6 @@ void RWLock::startWrite(){
     pthread_mutex_lock(&this->lock);
     #ifdef RWLOCK
 
-        //Enter Queue
-        //pthread_mutex_lock(&lock);
-        //WW++;
-
         while(this->AW != 0 && this->AR != 0){
             this->WW++;
             printf("write wait\n");
@@ -114,12 +94,8 @@ void RWLock::startWrite(){
         printf("write lock acquired\n");
         mem();
 
-        //Exit Queue
-        //WW--;
         pthread_mutex_unlock(&this->lock);
 
-    //#else
-    //    pthread_mutex_lock(&this->lock);
     #endif
 }
 
