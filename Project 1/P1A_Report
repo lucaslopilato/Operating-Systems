@@ -41,6 +41,8 @@ Wall Time = 2.51671s
 CPU Time = 4.3054s
 Throughput = 1592.56/s
 
+Our findings from the above time recordings for running each version of the hash table reveal how the addition  of usleep(1)in the get() function does not slow down the processing of the threads by a significant ammount. In fact, these test runs actually performed faster with sleeping threads because each thread is running indepently. When a thread goes to sleep it will simply hand-off the processing power to one of the other concurrent 199 threads. One microsecond is not long for a thread to sleep, and since our threads were synchronized in the locks, they can perform at a comparably fast time. It is important also to consider other background processes that may slow down the processing power and reduce the system throughput. Each time we ran the program, we would get slightly different results, but this is normal, as the underlying system OS may not always allocate all of its processing power to our program.
+
 The average overhead (in terms of wall clock time) added for 1 thread in the above test program:
 phashcoarse: 0.024 s/thread
 phashcoarserw: 0.033 s/thread
