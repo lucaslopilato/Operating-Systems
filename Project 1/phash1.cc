@@ -60,7 +60,7 @@ HashMap::HashMap() {
 
 int 
 HashMap::get(int key) {
-            usleep(1);
+            //usleep(1);
             int hash = (key % TABLE_SIZE);
             rwlocksArray[hash].startRead(); //Lock the specific index of the hashtable 
                                             // (allows access to the rest of the table)

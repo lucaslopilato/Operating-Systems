@@ -1,0 +1,49 @@
+When running the program under the 4 options with 200 threads and 1000 keys, the output times we got on our machine were as follows:
+
+phashcoarse
+Wall Time = 4.71318s
+CPU Time = 12.9566s
+Throughput = 850.382/s
+
+phashcoarserw
+Wall Time = 7.80268s
+CPU Time = 11.0847s
+Throughput = 513.67/s
+
+phashfine
+Wall Time = 0.119423s
+CPU Time = 0.247482s
+Throughput = 33561.3/s
+
+phashfinerw
+Wall Time = 0.13346s
+CPU Time = 0.212993s
+Throughput = 30031.5/s
+
+After adding usleep(1) to the get() function in both of our phash implementations, the times were:
+phashcoarse
+Wall Time = 5.02217s
+CPU Time = 13.9286s
+Throughput = 798.061/s
+
+phashcoarserw
+Wall Time = 5.53439s
+CPU Time = 9.34249s
+Throughput = 724.199/s
+
+phashfine
+Wall Time = 3.10435s
+CPU Time = 4.70665s
+Throughput = 1291.09/s
+
+phashfinerw
+Wall Time = 2.51671s
+CPU Time = 4.3054s
+Throughput = 1592.56/s
+
+The average overhead (in terms of wall clock time) added for 1 thread in the above test program:
+phashcoarse: 0.024 s/thread
+phashcoarserw: 0.033 s/thread
+phashfine: 0.0081 s/thread
+phashfinerw: 0.0066 s/thread
+
