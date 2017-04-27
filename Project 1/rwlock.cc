@@ -35,7 +35,7 @@ void RWLock::startRead(){
       
         this->WR++;
         //Wait until there are no active or waiting writers
-        while(WW != 0 && AW != 0){
+        while((WW + AW) > 0){
             
             //printf("read lock wait\n");
             //mem();
