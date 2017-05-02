@@ -29,8 +29,14 @@ Files Modified/Created compared to original Nacho Source Code (describe function
 - Modified Files List:
     - threadtest.cc (original file contents located in original folder, new implementation provided
       from the source code file threadtest-submit.cc)
-    -
+    - Makefile.common (original file contents still in code folder and renamed to Makefile_original.common
+      the new Makefile.common has the code implementation given to us)
 - Newly Created Files:
+    - hashchain.h (revised from Project 1A)
+    - hashchain.cc (revised from Project 1A)
+       - added the increment() function
+    - rwlock.h (revised from Project 1A)
+    - rwlock.cc (revised from Project 1A)
 
 Completed:
 Not Completed:
