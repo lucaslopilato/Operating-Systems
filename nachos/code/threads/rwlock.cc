@@ -34,7 +34,7 @@
 #else
     //Task 2 code (using NACHOS Lock)
     RWLock::RWLock() { 
-        lock = new Lock("nachOS_Lock")
+        lock = new Lock("nachOS_Lock");
     }
     RWLock::~RWLock() { 
         delete lock;
