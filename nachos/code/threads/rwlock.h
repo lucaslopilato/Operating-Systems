@@ -22,7 +22,7 @@ public:
 private:
 
     // Precompilers to change RWLock for each task ()
-    #ifndef RWLOCK
+    #ifndef P1_RWLOCK
     #ifdef  P1_SEMAPHORE
         // Task 1: mutex -> Semaphore
         Semaphore* semaphore;
