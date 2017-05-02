@@ -159,6 +159,9 @@ void Condition::Wait(Lock* conditionLock) {
         conditionLock->Acquire();
     }
 
+    IntStatus oldLevel = interrupt->SetLevel(IntOff);   // disable interrupts
+
+
     //Add thread to the queue
     queue->Append((void*)currentThread);
 
@@ -168,8 +171,10 @@ void Condition::Wait(Lock* conditionLock) {
     //Put Thread To Sleep
     currentThread->Sleep();
 
-    //Reacquire Lock
+    //Make sure lock is reacquired by current thread
     conditionLock->Acquire();
+
+    (void) interrupt->SetLevel(oldLevel);   // re-enable interrupts
 }
 
 void Condition::Signal(Lock* conditionLock) {
@@ -178,10 +183,16 @@ void Condition::Signal(Lock* conditionLock) {
         conditionLock->Acquire();
     }
 
+    IntStatus oldLevel = interrupt->SetLevel(IntOff);   // disable interrupts
+
+
     //Pull off first item of queue
     Thread *current = (Thread *)queue->Remove();
     if(current != NULL)
         scheduler->ReadyToRun(current);
+
+    (void) interrupt->SetLevel(oldLevel);   // re-enable interrupts
+
 }
 
 void Condition::Broadcast(Lock* conditionLock) {
@@ -189,10 +200,14 @@ void Condition::Broadcast(Lock* conditionLock) {
     if(!conditionLock->isHeldByCurrentThread()){
         conditionLock->Acquire();
     }
+    
+    IntStatus oldLevel = interrupt->SetLevel(IntOff);   // disable interrupts
 
     //Put all items in the queue
     Thread* current;
     while((current = (Thread *)queue->Remove()) != NULL){
         scheduler->ReadyToRun(current);
     }
+
+    (void) interrupt->SetLevel(oldLevel);   // re-enable interrupts
 }
