@@ -2,12 +2,116 @@
  *Read Write Lock
  *Implementation Based on https://www.cs.ucsb.edu/~cs170/slides/5synchAdv.pdf
  *
- *
- *
  **********/
 
 #include "rwlock.h"
 
+// Precompiler directives to change behavior (derived from example on "Update 4/28" )
+
+#ifndef P1_RWLOCK
+#ifdef P1_SEMAPHORE
+    //Task 1 code (using semaphore in place of mutex)
+    RWLock::RWLock() {
+        semaphore = new Semaphore("Semaphore_Lock",1); 
+    }
+    RWLock::~RWLock() { 
+        delete semaphore;
+    }
+    //NOTE Task 1: startRead should be the same as startWrite
+    void RWLock::startRead() {
+        semaphore->P(); 
+    } 
+    void RWLock::startWrite() {
+        semaphore->P();
+    }
+    //NOTE Task 1: doneRead should be the same as doneWrite
+    void RWLock::doneRead() { 
+        semaphore->V();
+    } 
+    void RWLock::doneWrite() {
+        semaphore->V(); 
+    }
+#else
+    //Task 2 code (using NACHOS Lock)
+    RWLock::RWLock() { 
+        lock = new Lock("nachOS_Lock")
+    }
+    RWLock::~RWLock() { 
+        delete lock;
+    }
+    //NOTE Task 2: startRead should be the same as startWrite
+    void RWLock::startRead() {
+        lock->Acquire();             //Acquire() implemented in Task 2 (Wesley)
+    } 
+    void RWLock::startWrite() {
+        lock->Acquire();            //Acquire() implemented in Task 2 (Wesley) 
+    }
+    //NOTE Task 2: doneRead should be the same as doneWrite
+    void RWLock::doneRead() {
+        lock->Release();             //Release implemented in Task 2 (Wesley)
+    } 
+    void RWLock::doneWrite() {
+        lock->Release();             //Release() implemented in Task 2 (Wesley)
+    }
+#endif
+#else
+    //Task 3 code (full rwlock)
+    RWLock::RWLock() {
+        AW = 0; // Active Writers
+        WW = 0; // Waiting Writers
+        AR = 0; // Active Readers
+        WR = 0; // Waiting Readers
+        okToRead = new Condition("okToRead");
+        okToWrite = new Condition("okToWrite");
+        lock = new Lock("RWLock");
+    }
+    RWLock::~RWLock() {
+        delete okToWrite;
+        delete okToRead;
+        delete lock; 
+    }
+    
+    // similar logic to Part A
+    
+    void RWLock::startRead() {
+        lock->Acquire();                    //Acquire() implemented in Task 3 (Lucas)
+        this->WR++;
+        while((this->WW + this->AW) > 0)    // No writers waiting or actvively writing
+            okToRead->Wait(lock);           //Wait() implemented in Task 3 (Lucas)
+        this->WR--;
+        lock->Release();                    //Release() implemented in Task 3 (Lucas)
+    }
+
+    void RWLock::doneRead() { 
+        lock->Acquire();                    //Acquire() implemented in Task 2 (Lucas)
+        AR--;
+        if(this->AR == 0 && this->WW > 0)   // no active readers or waiting writers
+            okToWrite->Signal(lock);        //Signal() implemented in Task 3 (Lucas)
+        lock->Release();                    //Release() implemented in Task 3 (Lucas)
+    }
+
+    void RWLock::startWrite() {
+        lock->Acquire();                    //Acquire() implmented in Task 3 (Lucas)
+        this->WW++;
+        while((this->AW + this->AR) >0)     // No one is actively writing or reading
+            okToWrite(lock);
+        this->WW--;
+        this->AW++;
+        lock->Release()                     //Release() implemented in Task 3 (Lucas)
+    }
+    void RWLock::doneWrite() { 
+        lock->Acquire();                    //Acquire() implmented in Task 3 (Lucas)
+        this->AW--;
+        if(this->WW > 0)
+            okToWrite->Signal(lock);        //Signal() implemented in Task 3 (Lucas)
+        else if(this->WR > 0)
+            okToRead->Broadcast(lock);      //Broadcast() implemented in Task 3 (Lucas)
+        lock->Release();                    //Release() implemented in Task 3 (Lucas)
+    }
+#endif
+
+
+/*          Implementation of RWLock from Part A
 RWLock::RWLock(){
     
     #ifdef RWLOCK
@@ -54,6 +158,8 @@ void RWLock::startRead(){
     #endif
 
 }
+*/
+/*
 
 void RWLock::doneRead(){
     
@@ -77,12 +183,12 @@ void RWLock::doneRead(){
         //Release Active Readers
         //printf("Read Lock Unlocked\n");
         //mem();
-    #endif
+//    #endif
 
-    pthread_mutex_unlock(&this->lock);
+//    pthread_mutex_unlock(&this->lock);
 
-}
-
+//}
+/*
 void RWLock::startWrite(){
     pthread_mutex_lock(&this->lock);
     #ifdef RWLOCK
@@ -134,3 +240,4 @@ void RWLock::mem(){
 
 }
 #endif
+*/
