@@ -105,9 +105,8 @@ Semaphore::V()
 Lock::Lock(char* debugName)
 {
     name = debugName;
-    value = 1;
     queue = new List;
-    owner = currentThread;
+    owner = NULL;
 }
 
 Lock::~Lock()
@@ -119,11 +118,13 @@ void
 Lock::Acquire()
 {
     IntStatus hold = interrupt->SetLevel(IntOff);
-    while(value==0){
+    while(owner!=NULL){
         queue->Append((void *)currentThread);
         currentThread->Sleep();
     }
-    value = 1;
+
+    //Update Owner
+    owner = currentThread;
     (void) interrupt->SetLevel(hold);
     
 }
@@ -133,10 +134,14 @@ Lock::Release()
 {
     IntStatus oldLevel = interrupt->SetLevel(IntOff);
 
-    owner = (Thread *)queue->Remove();
-    if (owner != NULL)	   // make thread ready, consuming the V immediately
-        scheduler->ReadyToRun(owner);
-    value = 0;
+    //Release owner
+    owner = NULL;
+
+    //Allow next thread to run
+    Thread *suitor = (Thread *)queue->Remove();
+    if (suitor != NULL)	   // make thread ready, consuming the V immediately
+        scheduler->ReadyToRun(suitor);
+
     (void) interrupt->SetLevel(oldLevel);
 }
 

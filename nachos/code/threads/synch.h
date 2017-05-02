@@ -83,7 +83,6 @@ public:
 
 private:
     char* name;
-    int value;
     List *queue;
     Thread *owner;				// for debugging
     // plus some other stuff you'll need to define
