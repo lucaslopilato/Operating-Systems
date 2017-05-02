@@ -105,10 +105,55 @@ Lock::~Lock() {}
 void Lock::Acquire() {}
 void Lock::Release() {}
 
-Condition::Condition(char* debugName) { }
-Condition::~Condition() { }
-void Condition::Wait(Lock* conditionLock) {
-    ASSERT(FALSE);
+Condition::Condition(char* debugName) {
+    name = debugName;
+    queue = new List;
 }
-void Condition::Signal(Lock* conditionLock) { }
-void Condition::Broadcast(Lock* conditionLock) { }
+
+Condition::~Condition() {
+    delete queue;
+}
+
+void Condition::Wait(Lock* conditionLock) {
+    //Make sure lock is held by current thread
+    if(!conditionLock->isHeldByCurrentThread()){
+        conditionLock->Acquire();
+    }
+
+    //Add thread to the queue
+    queue->Append((void*)currentThread);
+
+    //Release Lock
+    conditionLock->Release();
+
+    //Put Thread To Sleep
+    currentThread->Sleep();
+
+    //Reacquire Lock
+    conditionLock->Acquire();
+}
+
+void Condition::Signal(Lock* conditionLock) {
+    //Make sure lock is held by current thread
+    if(!conditionLock->isHeldByCurrentThread()){
+        conditionLock->Acquire();
+    }
+
+    //Pull off first item of queue
+    Thread *current = (Thread *)queue->Remove();
+    if(current != NULL)
+        scheduler->ReadyToRun(current);
+}
+
+void Condition::Broadcast(Lock* conditionLock) {
+    //Make sure lock is held by current thread
+    if(!conditionLock->isHeldByCurrentThread()){
+        conditionLock->Acquire();
+    }
+
+    //Put all items in the queue
+    Thread* current;
+    while((current = (Thread *)queue->Remove()) != NULL){
+        scheduler->ReadyToRun(current);
+    }
+}

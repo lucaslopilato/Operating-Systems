@@ -138,5 +138,7 @@ public:
 private:
     char* name;
     // plus some other stuff you'll need to define
+    //List of threads waiting on the condition
+    List *queue;
 };
 #endif // SYNCH_H
