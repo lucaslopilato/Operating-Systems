@@ -31,6 +31,8 @@ Files Modified/Created compared to original Nacho Source Code (describe function
       from the source code file threadtest-submit.cc)
     - Makefile.common (original file contents still in code folder and renamed to Makefile_original.common
       the new Makefile.common has the code implementation given to us)
+    - hashchain.h (changed slightly to revised form provided in hashchain-submit.h)
+    - hashchain.cc (changed slightly to revised form provided in hashcain-submit.cc)
 - Newly Created Files:
     - hashchain.h (revised from Project 1A)
     - hashchain.cc (revised from Project 1A)
