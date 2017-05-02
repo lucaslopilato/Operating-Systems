@@ -16,3 +16,6 @@ C_OFILES = $(THREAD_O)
 include ../Makefile.common
 include ../Makefile.dep
 -include deps.mk
+
+clean:
+	rm *.o nachos
