@@ -95,10 +95,17 @@
         lock->Acquire();                    //Acquire() implmented in Task 3 (Lucas)
         this->WW++;
         while((this->AW + this->AR) >0)     // No one is actively writing or reading
+<<<<<<< HEAD
             okToWrite->Signal(lock);
         this->WW--;
         this->AW++;
         lock->Release();                     //Release() implemented in Task 3 (Lucas)
+=======
+            okToWrite->Wait(lock);
+        this->WW--;
+        this->AW++;
+        lock->Release();                    //Release() implemented in Task 3 (Lucas)
+>>>>>>> 935c407650bad1158731e71e6da2c2561d5ea858
     }
     void RWLock::doneWrite() { 
         lock->Acquire();                    //Acquire() implmented in Task 3 (Lucas)
