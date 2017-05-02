@@ -94,7 +94,7 @@
         lock->Acquire();                    //Acquire() implmented in Task 3 (Lucas)
         this->WW++;
         while((this->AW + this->AR) >0)     // No one is actively writing or reading
-            okToWrite(lock);
+            okToWrite->Wait(lock);
         this->WW--;
         this->AW++;
         lock->Release()                     //Release() implemented in Task 3 (Lucas)
