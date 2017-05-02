@@ -10,7 +10,7 @@
 
 #ifndef P1_RWLOCK
 #ifdef P1_SEMAPHORE
-    //Task 1 code (using semaphore in place of mutex)
+    //Task 1 (using semaphore in place of mutex)
     RWLock::RWLock() {
         semaphore = new Semaphore("Semaphore_Lock",1); 
     }
@@ -32,7 +32,7 @@
         semaphore->V(); 
     }
 #else
-    //Task 2 code (using NACHOS Lock)
+    //Task 2 (using NACHOS Lock)
     RWLock::RWLock() { 
         lock = new Lock("nachOS_Lock");
     }
@@ -79,6 +79,7 @@
         while((this->WW + this->AW) > 0)    // No writers waiting or actvively writing
             okToRead->Wait(lock);           //Wait() implemented in Task 3 (Lucas)
         this->WR--;
+        this->AR++;
         lock->Release();                    //Release() implemented in Task 3 (Lucas)
     }
 
@@ -94,10 +95,10 @@
         lock->Acquire();                    //Acquire() implmented in Task 3 (Lucas)
         this->WW++;
         while((this->AW + this->AR) >0)     // No one is actively writing or reading
-            okToWrite(lock);
+            okToWrite->Signal(lock);
         this->WW--;
         this->AW++;
-        lock->Release()                     //Release() implemented in Task 3 (Lucas)
+        lock->Release();                     //Release() implemented in Task 3 (Lucas)
     }
     void RWLock::doneWrite() { 
         lock->Acquire();                    //Acquire() implmented in Task 3 (Lucas)
