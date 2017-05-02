@@ -40,6 +40,8 @@ Semaphore::Semaphore(char* debugName, int initialValue)
     queue = new List;
 }
 
+
+
 //----------------------------------------------------------------------
 // Semaphore::Semaphore
 // 	De-allocate semaphore, when no longer needed.  Assume no one
@@ -100,15 +102,48 @@ Semaphore::V()
 // Dummy functions -- so we can compile our later assignments
 // Note -- without a correct implementation of Condition::Wait(),
 // the test case in the network assignment won't work!
-Lock::Lock(char* debugName) {}
-Lock::~Lock() {}
-void Lock::Acquire() {}
-void Lock::Release() {}
+Lock::Lock(char* debugName)
+{
+    name = debugName;
+    value = 1;
+    queue = new List;
+    owner = currentThread;
+}
+
+Lock::~Lock()
+{
+    delete queue;
+}
+
+void
+Lock::Acquire()
+{
+    IntStatus hold = interrupt->SetLevel(IntOff);
+    while(value==0){
+        queue->Append((void *)currentThread);
+        currentThread->Sleep();
+    }
+    value = 1;
+    (void) interrupt->SetLevel(hold);
+    
+}
+
+void
+Lock::Release()
+{
+    IntStatus oldLevel = interrupt->SetLevel(IntOff);
+
+    owner = (Thread *)queue->Remove();
+    if (owner != NULL)	   // make thread ready, consuming the V immediately
+        scheduler->ReadyToRun(owner);
+    value = 0;
+    (void) interrupt->SetLevel(oldLevel);
+}
 
 Condition::Condition(char* debugName) { }
 Condition::~Condition() { }
 void Condition::Wait(Lock* conditionLock) {
-    ASSERT(FALSE);
+    //ASSERT(FALSE);
 }
 void Condition::Signal(Lock* conditionLock) { }
 void Condition::Broadcast(Lock* conditionLock) { }
