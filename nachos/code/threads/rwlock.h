@@ -25,7 +25,7 @@ private:
     #ifndef RWLOCK
     #ifdef  P1_SEMAPHORE
         // Task 1: mutex -> Semaphore
-        Sempahore* semaphore;
+        Semaphore* semaphore;
     #else
         // Task 2: nachOS Lock
         Lock* lock;
