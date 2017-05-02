@@ -140,6 +140,10 @@ Lock::Release()
     (void) interrupt->SetLevel(oldLevel);
 }
 
+bool Lock::isHeldByCurrentThread(){
+    return (owner == currentThread);
+}
+
 Condition::Condition(char* debugName) {
     name = debugName;
     queue = new List;
