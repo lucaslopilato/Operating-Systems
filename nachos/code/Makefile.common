@@ -36,7 +36,14 @@ LD = g++ -m32
 AS = as --32
 MAKE = make
 
-PROGRAM = nachos
+PROGRAM1 = nachos_sem
+PROGRAM2 = nachos_lock
+PROGRAM4 = nachos_rw
+SYNCHFLAGS = -DP1_RWLOCK
+
+#extra flags needed for compile proj1b code
+PROGRAM_FLAGS =-DCHANGED -DTHREADS $(INCPATH)
+
 
 THREAD_H =../threads/copyright.h\
 	../threads/list.h\
@@ -49,7 +56,9 @@ THREAD_H =../threads/copyright.h\
 	../machine/interrupt.h\
 	../machine/sysdep.h\
 	../machine/stats.h\
-	../machine/timer.h
+	../machine/timer.h\
+	../threads/hashchain.h\
+	../threads/rwlock.h
 
 THREAD_C =../threads/main.cc\
 	../threads/list.cc\
@@ -63,12 +72,14 @@ THREAD_C =../threads/main.cc\
 	../machine/interrupt.cc\
 	../machine/sysdep.cc\
 	../machine/stats.cc\
-	../machine/timer.cc
+	../machine/timer.cc\
+	../threads/hashchain.cc\
+	../threads/rwlock.cc
 
 THREAD_S = ../threads/switch.s
 
 THREAD_O =main.o list.o scheduler.o synch.o synchlist.o system.o thread.o \
-	utility.o threadtest.o interrupt.o stats.o sysdep.o timer.o
+	utility.o interrupt.o stats.o sysdep.o timer.o
 
 USERPROG_H = ../userprog/addrspace.h\
 	../userprog/bitmap.h\
@@ -121,11 +132,19 @@ OFILES = $(C_OFILES) $(S_OFILES)
 
 all:
 	@ $(MAKE) depend 
-	@ $(MAKE) $(PROGRAM) 
+	@ $(MAKE) $(PROGRAM1) 
+	@ $(MAKE) $(PROGRAM2)
+	@ $(MAKE) $(PROGRAM4)
 
-$(PROGRAM): $(OFILES)
+$(PROGRAM1): SYNCHFLAGS=-DP1_SEMAPHORE
+$(PROGRAM2): SYNCHFLAGS=-DP1_LOCK
+$(PROGRAM4): SYNCHFLAGS=-DP1_RWLOCK
+
+#NOTE: we directly compile the cc files for rwlock,hashchain,threadtest so that the flags get included properly at compile time
+$(PROGRAM1) $(PROGRAM2) $(PROGRAM4): $(OFILES) rwlock.cc hashchain.cc threadtest.cc $(THREAD_H)
 	@ echo $@
-	@ $(LD) $(OFILES) $(LDFLAGS) -o $(PROGRAM)
+	@ $(LD) $(OFILES) rwlock.cc hashchain.cc threadtest.cc $(PROGRAM_FLAGS) $(LDFLAGS) $(SYNCHFLAGS) $(TESTFLAGS) -o $@
+
 
 $(C_OFILES): %.o:
 	@ echo $<

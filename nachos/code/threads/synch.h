@@ -82,7 +82,10 @@ public:
     // Condition variable ops below.
 
 private:
-    char* name;				// for debugging
+    char* name;
+    int value;
+    List *queue;
+    Thread *owner;				// for debugging
     // plus some other stuff you'll need to define
 };
 
