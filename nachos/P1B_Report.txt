@@ -31,6 +31,10 @@ Files Modified/Created compared to original Nacho Source Code (describe function
       from the source code file threadtest-submit.cc)
     -
 - Newly Created Files:
+    - hashchain.h (revised from Project 1A)
+    - hashchain.cc (revised from Project 1A)
+    - rwlock.h (revised from Project 1A)
+    - rwlock.cc (revised from Project 1A)
 
 Completed:
 Not Completed:
