@@ -38,7 +38,9 @@ Files Modified/Created compared to original Nacho Source Code (describe function
     - hashchain.cc (revised from Project 1A)
        - added the increment() function
     - rwlock.h (revised from Project 1A)
+       - added precompiler directives
     - rwlock.cc (revised from Project 1A)
+       - added precompiler directives and implementations for tasks 1-3
 
 Completed:
 Not Completed:
