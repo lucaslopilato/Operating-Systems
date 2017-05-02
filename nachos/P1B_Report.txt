@@ -1,0 +1,36 @@
+Project Report for Part B
+- Lucas Lopilato - Phillip Fry - Wesley Pollek
+  
+TODO: this file includes
+  - the group members, what each person did and why each does a fair share of the workload
+  - a design explanation of these 3 tasks
+  - how to compile and run your code
+  - The name of files that are modified or created compared to the original Nacho source code. 
+    What functionalities are added to each file. Explain their functionalities
+  - What is completed and what is not. What is working and what is not working. And for the ones
+    that are incomplete, what is their current status.
+    
+Group Member Roles
+Task leads...
+
+Task 1: Phillip Fry
+Task 2: Wesley Pollek
+Task 3: Lucas Lopilato
+
+This is a fair distribution of the workload on the project since each task requires a significant 
+amount of work to be done.
+
+Design Explanation:
+Task 1:
+Task 2:
+Task 3:
+
+Files Modified/Created compared to original Nacho Source Code (describe functionalities)
+- Modified Files List:
+- Newly Created Files:
+
+Completed:
+Not Completed:
+
+Working:
+Not Working (status):
