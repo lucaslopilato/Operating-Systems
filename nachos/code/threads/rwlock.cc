@@ -97,7 +97,7 @@
             okToWrite->Wait(lock);
         this->WW--;
         this->AW++;
-        lock->Release()                     //Release() implemented in Task 3 (Lucas)
+        lock->Release();                    //Release() implemented in Task 3 (Lucas)
     }
     void RWLock::doneWrite() { 
         lock->Acquire();                    //Acquire() implmented in Task 3 (Lucas)
