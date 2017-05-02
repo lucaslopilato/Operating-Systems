@@ -18,4 +18,4 @@ include ../Makefile.dep
 -include deps.mk
 
 clean:
-	rm *.o nachos
+	rm *.o nachos_sem nachos_lock nachos_rw
