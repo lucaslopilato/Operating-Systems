@@ -1,7 +1,7 @@
 Project Report for Part B
 - Lucas Lopilato - Phillip Fry - Wesley Pollek
   
-TODO: this file includes
+This file includes
   - the group members, what each person did and why each does a fair share of the workload
   - a design explanation of these 3 tasks
   - how to compile and run your code
