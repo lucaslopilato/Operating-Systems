@@ -68,10 +68,6 @@ void runcommand(char* command, char** args, int count) {
   	// before fork separate via some kind of tokenizing on <, >, and |
  	// take what is on the right side of delineator's output into what is on the left
 
-  	// Check the number of tokens given in the command line
-  	//printf("Size %d \n", count);
-  	//printf("Args are: \n ");
-
   	//Count the number of pipes
   	int pipeCount = 0;
   	int pipes[3][2];
@@ -80,15 +76,11 @@ void runcommand(char* command, char** args, int count) {
   	int pipeCommands = 0;
   	//Index of the last command
   	int lastCommand = 0; 
-
-  
   	//Keep Track of number of arguments in the current command
   	int currentCount = 0;
 	int j = 0;
   	for (int i = 0; i<count; i++){
-
-   		//Handle "|" function process
-  
+   		//Handle "|" function process 
     	if(strcmp(args[i],specialToken[2])==0) {
      		//Create New Pipe
 	        if(pipe(pipes[pipeCount]) < 0) perror("Pipe Creation Failed");
@@ -101,47 +93,20 @@ void runcommand(char* command, char** args, int count) {
       		commands[pipeCommands] = &args[i-currentCount];
       		args[i] = NULL; //Physical Partition
       		pipeCommands++;
-
       		//Guess the index of the last command
       		lastCommand = i+1;
-
       		//Reset Current Count
       		currentCount = 0;
       		continue;
     	}
-
     	//Increment count of items in command
     	currentCount++;
 	}
-
-	indeces[j+1]=count-1;
-	//printf("start and end of subcommands: %d, %d, %d, %d, %d, %d, %d, %d \n",
-	//indeces[0],indeces[1],indeces[2],indeces[3],indeces[4],indeces[5],indeces[6],indeces[7]);
-    /*
-    
-    Indeces is size 8 to hold at most the information for start,end of each sub-process
-    a b c | d e | f g h i | j
-    0   2   4 5   7     10  12
-    
-    so indeces for this is = [0,2,4,5,7,10,12,12]
-    (will store start and end equal for single command)
-    
-    if less than 3 pipes, will store 0s at the end
-    a b | c d | e f g
-    0 1   3 4   6   8
-    indeces = [0,1,3,4,6,8,0,0]
-    
-    */
-
-
-
-	
+	indeces[j+1]=count-1;	
 	//Put last command in command
 	commands[pipeCommands] = &args[lastCommand];
-
   	//Ensure Proper Amount of Pipes
   	if(pipeCount > 3) perror("Greater than 3 pipes Requested \n");
-
   	//Execute Piped Commands
   	for(int i=0; i<pipeCount; i++){
     	pid_t pid = fork();
@@ -153,52 +118,29 @@ void runcommand(char* command, char** args, int count) {
       		waitpid(pid, NULL, 0);
     	} 
     	else { // child
-    
-	  //int index = (commands[i] - commands[0] )/ sizeof(char*);
 	                int index = indeces[i*2];
 			int size = indeces[(i*2)+1] - indeces[i*2];
-			//int size = (*commands[i+1] - *commands[i]);
-			//printf("Args[i] %p, args[i+2] %p\n", args[0], args[2]);
-			//printf("Commands i %p, commands i+1 %p\n", commands[0], commands[1]);
-			//printf("index %d\n", index);
-			//printf("size %d\n", size);
-
     		//If argument is not the first command
     		if(i > 0){
-      			
       			//Hook up stdin
       			dup2(pipes[i-1][0], 0);
-
       			//Close old FDs 
       			close(pipes[i-1][0]);
       			close(pipes[i-1][1]);
     		}
-    
     		//Hook up stdout
     		dup2(pipes[i][1],1);
-
     		//Close old FDs
     		close(pipes[i][1]);
     		close(pipes[i][0]);
-
-
     		// Look for '<' or '>' right here to change commands[i]
-    		// find count = numArguments & command index
-    		
-    		
-    		//int index = (commands[i] - commands[0] )/ sizeof(char*);
-    		//int size = (commands[i+1] - commands[i] - sizeof(char*) ) / sizeof(char*);
     		endCarrots(index, args, size);
-
-
-
     		//Execute and handle errors if the function returns
     		execvp(commands[i][0], commands[i]);
     		perror(commands[i][0]);
     		exit(1);
     	}
   	}	
- 
   	//Handle Last Command
   	pid_t pid = fork();
   	if(pid) { // parent
@@ -209,25 +151,19 @@ void runcommand(char* command, char** args, int count) {
     	waitpid(pid, NULL, 0);
   	} 
   	else { // child
-
     	//If there was a pipe, collect last output
     	if(pipeCount > 0){
-
         	dup2(pipes[pipeCount-1][0], 0);
         	close(pipes[pipeCount-1][0]);
         	close(pipes[pipeCount-1][1]);
     	}
-
 	    // Handle '<' and '>'
-	    // make
-	int lastarg = indeces[(pipeCount*2)+1];
+	    int lastarg = indeces[(pipeCount*2)+1];
     	endCarrots(lastCommand, args, lastarg);
-    	
    		//Execute and handle errors if the function returns
     	execvp(args[lastCommand], &args[lastCommand]);
     	perror(args[lastCommand]);
     	exit(1);
-    	
   	}
 }	
 
