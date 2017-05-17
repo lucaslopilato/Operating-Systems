@@ -53,7 +53,8 @@ HashMap::HashMap() {
                   table[i] = NULL;
             }
             for(int i = 0; i < TABLE_SIZE; i++){      
-              rwlocksArray[i] = RWLock();
+              rwlocksArray[i] = RWLock(); // this->rwlock = RWLock();
+
             }
             
       }
@@ -63,9 +64,10 @@ HashMap::get(int key) {
             //usleep(1);
             int hash = (key % TABLE_SIZE);
             rwlocksArray[hash].startRead(); //Lock the specific index of the hashtable 
-                                            // (allows access to the rest of the table)
+            //this->rwlock.startRead();     // (allows access to the rest of the table)
             if (table[hash] == NULL){
                   rwlocksArray[hash].doneRead(); // Nothing to look at so unlock
+                  //this->rwlock.doneRead();
                   return -1;
             }
             else {
@@ -75,11 +77,11 @@ HashMap::get(int key) {
 
                   // Finished loop through the hashtable element so unlock and return result
                   if (entry == NULL){
-                        rwlocksArray[hash].doneRead();
+                        rwlocksArray[hash].doneRead(); //this->rwlock.doneRead();
                         return -1;
                   }
                   else{
-                        rwlocksArray[hash].doneRead();
+                        rwlocksArray[hash].doneRead(); //this->rwlock.doneRead();
                         return entry->getValue();
                   }
             }
@@ -90,6 +92,7 @@ HashMap::put(int key, int value) {
             // Begin to write to the hashtable so we need to lock out readers
             int hash = (key % TABLE_SIZE);
             rwlocksArray[hash].startWrite(); // only lock the one element
+            //this->rwlock.startWrite(); // Coarse
             if (table[hash] == NULL)
                   table[hash] = new LinkedHashEntry(key, value);
             else {
@@ -102,7 +105,7 @@ HashMap::put(int key, int value) {
                         entry->setNext(new LinkedHashEntry(key, value));
             }
             // done with updating the table element so unlock
-            rwlocksArray[hash].doneWrite();
+            rwlocksArray[hash].doneWrite(); //this->rwlock.doneWrite();
       }
  
 
@@ -111,6 +114,7 @@ HashMap:: remove(int key) {
             // Begin to write(remove) elements from hashtable so lock out readers
             int hash = (key % TABLE_SIZE);
             rwlocksArray[hash].startWrite(); // only lock one element
+            //this->rwlock.startWrite();    // Coarse
             if (table[hash] != NULL) {
                   LinkedHashEntry *prevEntry = NULL;
                   LinkedHashEntry *entry = table[hash];
@@ -131,6 +135,7 @@ HashMap:: remove(int key) {
                   }
             }
             rwlocksArray[hash].doneWrite(); // unlock
+            //this->rwlock.doneWrite();     //Coarse
             
       }
  
@@ -146,7 +151,7 @@ HashMap:: ~HashMap() {
                         }
                   }
             delete[] table;
-            delete[] rwlocksArray;
+            delete[] rwlocksArray; //only for fine grain
 }
 
 

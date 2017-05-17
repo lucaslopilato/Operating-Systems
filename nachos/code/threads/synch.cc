@@ -163,9 +163,8 @@ void Condition::Wait(Lock* conditionLock) {
     if(!conditionLock->isHeldByCurrentThread()){
         conditionLock->Acquire();
     }
-
-    IntStatus oldLevel = interrupt->SetLevel(IntOff);   // disable interrupts
-
+    // disable interrupts
+    IntStatus oldLevel = interrupt->SetLevel(IntOff);   
 
     //Add thread to the queue
     queue->Append((void*)currentThread);
@@ -179,7 +178,8 @@ void Condition::Wait(Lock* conditionLock) {
     //Make sure lock is reacquired by current thread
     conditionLock->Acquire();
 
-    (void) interrupt->SetLevel(oldLevel);   // re-enable interrupts
+    // re-enable interrupts
+    (void) interrupt->SetLevel(oldLevel);   
 }
 
 void Condition::Signal(Lock* conditionLock) {
@@ -187,17 +187,16 @@ void Condition::Signal(Lock* conditionLock) {
     if(!conditionLock->isHeldByCurrentThread()){
         conditionLock->Acquire();
     }
-
-    IntStatus oldLevel = interrupt->SetLevel(IntOff);   // disable interrupts
-
+    // disable interrupts
+    IntStatus oldLevel = interrupt->SetLevel(IntOff);   
 
     //Pull off first item of queue
     Thread *current = (Thread *)queue->Remove();
     if(current != NULL)
         scheduler->ReadyToRun(current);
 
-    (void) interrupt->SetLevel(oldLevel);   // re-enable interrupts
-
+    // re-enable interrupts
+    (void) interrupt->SetLevel(oldLevel);   
 }
 
 void Condition::Broadcast(Lock* conditionLock) {
@@ -205,14 +204,14 @@ void Condition::Broadcast(Lock* conditionLock) {
     if(!conditionLock->isHeldByCurrentThread()){
         conditionLock->Acquire();
     }
-    
-    IntStatus oldLevel = interrupt->SetLevel(IntOff);   // disable interrupts
+    // disable interrupts
+    IntStatus oldLevel = interrupt->SetLevel(IntOff);   
 
     //Put all items in the queue
     Thread* current;
     while((current = (Thread *)queue->Remove()) != NULL){
         scheduler->ReadyToRun(current);
     }
-
-    (void) interrupt->SetLevel(oldLevel);   // re-enable interrupts
+    // re-enable interrupts
+    (void) interrupt->SetLevel(oldLevel);   
 }
