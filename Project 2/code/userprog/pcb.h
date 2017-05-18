@@ -7,12 +7,19 @@
 #define PCB_H
 
 #include "system.h"
+#include "utility.h"
+
 
 class PCB {
 
 public:
     PCB(int pid, int parentPid);
     ~PCB();
+
+    int getPID();
+    int addFile(UserOpenFile file);
+    UserOpenFile* getFile(int fileID);
+    void removeFile(int fileID);
 
     int pid;            // Process ID
     int parentPid;      // Parent's Process ID

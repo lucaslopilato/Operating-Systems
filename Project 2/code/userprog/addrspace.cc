@@ -15,14 +15,9 @@
 // All rights reserved.  See copyright.h for copyright notice and limitation 
 // of liability and disclaimer of warranty provisions.
 
-#include "copyright.h"
-#include "system.h"
 #include "addrspace.h"
-#include "noff.h"
-#include "machine.h" // definition of PageSize
-#ifdef HOST_SPARC
-#include <strings.h>
-#endif
+
+
 
 //----------------------------------------------------------------------
 // SwapHeader

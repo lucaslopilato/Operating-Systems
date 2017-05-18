@@ -6,8 +6,7 @@
 */
 
 #include "processmanager.h"
-#include "utility.h" // definition of NULL
-#include "system.h" // definition of processManagerLock
+
 
 //-----------------------------------------------------------------------------
 // ProcessManager::ProcessManager
