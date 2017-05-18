@@ -12,6 +12,8 @@
 #include "copyright.h"
 #include "system.h"
 #include "noff.h"
+#include "sysopenfile.h"
+#include "pcb.h"
 #include "machine.h" //definition of PageSize
 #ifdef HOST_SPARC
 #include <strings.h>
@@ -25,7 +27,7 @@
 class AddrSpace {
 
 public:
-    AddrSpace(OpenFile *executable, PCB *pcb);	// Create an address space,
+    AddrSpace(OpenFile* executable, PCB *pcb);	// Create an address space,
                                         // initializing it with the program
                                         // stored in the file "executable"
     AddrSpace(const AddrSpace* other, PCB* pcb); //Copy Constructor
