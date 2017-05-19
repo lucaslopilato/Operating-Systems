@@ -6,12 +6,16 @@
 #ifndef PCB_H
 #define PCB_H
 
-#include "system.h"
-#include "utility.h"
+//#include "system.h"
+//#include "utility.h"
 #include "useropenfile.h"
+#include "bitmap.h"
 // Figure out how to include thread
+//#include <iostream>
+//#include <thread.h>
 //#include "thread.h"
 
+class Thread;
 
 class PCB {
 
@@ -21,7 +25,7 @@ public:
 
     int getPID();
     int addFile(UserOpenFile file);
-    UserOpenFile* getFile(int fileID);
+    UserOpenFile *getFile(int fileID);
     void removeFile(int fileID);
 
     int pid;            // Process ID
