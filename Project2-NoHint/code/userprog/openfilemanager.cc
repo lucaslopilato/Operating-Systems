@@ -10,8 +10,11 @@
 
 OpenFileManager::OpenFileManager()
 {
+   openFileTable = new SysOpenFile*[OPEN_FILE_TABLE_SIZE];
+   for(int i=0; i<OPEN_FILE_TABLE_SIZE; i++)
+    openFileTable[i] = NULL;
    consoleWriteLock = new Lock("consoleWriteLock");
-    usedFileSpace = 0;    // added
+   usedFileSpace = 0;    // added
 }
 
 //----------------------------------------------------------------------

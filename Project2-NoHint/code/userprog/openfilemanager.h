@@ -27,7 +27,7 @@ public:
     Lock *consoleWriteLock;
     
 private:
-    SysOpenFile* openFileTable[OPEN_FILE_TABLE_SIZE];
+    SysOpenFile** openFileTable;
 
     /* Added to original code */
     int getFileIndex(OpenFile* file);

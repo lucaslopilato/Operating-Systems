@@ -34,8 +34,8 @@ ProcessManager::~ProcessManager()
 {
     delete pids;
     for(int i=0; i < MAX_PROCESSES; i++){
-        if(pcbList[i] == NULL)
-            delete pcbList;
+        if(pcbList[i] != NULL)
+            delete pcbList[i];
 
         delete lockList[i];
         delete conditionList[i];
