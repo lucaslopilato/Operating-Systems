@@ -492,11 +492,12 @@ void readFileNameUserToKernel(char* filename)
 {
 
     int currentPosition = 0;
-    int fileName = machine->ReadRegister(4);
-    while (filename[currentPosition] != 0){
-        moveBytesMemoryToKernel(fileName, filename+currentPosition, 1);
-        fileName++;
-    }
+    int filenameArg = machine->ReadRegister(4);
+
+    do{
+        moveBytesMemoryToKernel(filenameArg, filename+currentPosition, 1);
+        filenameArg++;
+    } while (filename[currentPosition++] != 0);
 
     filename[currentPosition] = 0;
 }
