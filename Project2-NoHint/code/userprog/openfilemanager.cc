@@ -11,33 +11,94 @@
 OpenFileManager::OpenFileManager()
 {
    consoleWriteLock = new Lock("consoleWriteLock");
+    usedFileSpace = 0;    // added
 }
 
 //----------------------------------------------------------------------
 // OpenFileManager::~OpenFileManager
+// ** Implement this **
 //----------------------------------------------------------------------
 
 OpenFileManager::~OpenFileManager()
 {
+    for(int i=0; i<OPEN_FILE_TABLE_SIZE; i++){
+        if(openFileTable[i] != NULL){
+            delete openFileTable[i];
+        }
+    }
+    delete[] openFileTable;
     delete consoleWriteLock;
 }
 
 //----------------------------------------------------------------------
 // OpenFileManager::addOpenFile
 //  Adds an on open file to the system file table.
+// ** Implement this **
 //----------------------------------------------------------------------
 
-int OpenFileManager::addOpenFile(SysOpenFile openFile)
+int OpenFileManager::addOpenFile(OpenFile* openFile, char* fileName)
 {
-    return 0;
+    int index = getFileIndex(openFile);
+    if(index != ERR_FAIL_FIND){
+        if(usedFileSpace == OPEN_FILE_TABLE_SIZE)
+            return ERR_FAIL_ADD;
+        for(int i=0; i < OPEN_FILE_TABLE_SIZE; i++){
+            if(openFileTable[i] == NULL){
+                openFileTable[i] = new SysOpenFile(openFile, i, fileName);
+                usedFileSpace++;
+                return i;
+            }
+        }
+    }
+    else{
+        openFileTable[index]->numProcessesOpen++;
+        return index;
+    }
+    return ERR_FAIL_ADD;    
 }
 
 //----------------------------------------------------------------------
 // OpenFileManager::getOpenFile
 //  Retrieves the system file table entry from the file table.
+//  ** Implement this **
 //----------------------------------------------------------------------
 
 SysOpenFile *OpenFileManager::getOpenFile(int index)
 {
-    return 0;
+    if(openFileTable[index] == NULL)
+        return NULL;
+
+    return openFileTable[index];
 }
+
+
+//----------------------------------------------------------------------
+// OpenFileManager::getFileIndex(OpenFile* file)
+//  Retrieves the index of the file specified
+//  ** Implement this **
+//----------------------------------------------------------------------
+
+int OpenFileManager::getFileIndex(OpenFile* file)
+{
+    for(int i=0; i< OPEN_FILE_TABLE_SIZE; i++){
+        if(openFileTable[i]->openFile == file && openFileTable[i] != NULL)
+                return i;
+    }
+    return ERR_FAIL_FIND;
+}
+
+//----------------------------------------------------------------------
+// OpenFileManager::reduceOpenFiles(int index)
+//  Reduce the number of processes using an open file
+//  ** Implement this **
+//----------------------------------------------------------------------
+
+void OpenFileManager::reduceOpenFiles(int index)
+{
+    openFileTable[index]->reduceOpenProcesses();
+    if(openFileTable[index]->numProcessesOpen == 0){
+        delete openFileTable[index];
+        usedFileSpace--;
+        openFileTable[index] = NULL;
+    }
+} 

@@ -17,6 +17,7 @@
 #include "filesys.h"
 
 #define UserStackSize 1024              // increase this as necessary!
+#define DNE -1
 
 class AddrSpace {
 
@@ -24,6 +25,9 @@ public:
     AddrSpace(OpenFile *executable);	// Create an address space,
                                         // initializing it with the program
                                         // stored in the file "executable"
+
+    AddrSpace(const AddrSpace* other);  // Copy Constructor A
+    
     ~AddrSpace();			            // De-allocate an address space
 
     void InitRegisters();               // Initialize user-level CPU registers,
@@ -35,11 +39,30 @@ public:
     int Translate(int virtualAddr);     // Return the physical memory address
                                         // mapped by a virtual address
 
+    /* Added to original Source code */
+    // Get the number of Pages
+    unsigned int getPageNum(){
+        return numPages;
+    }
+
+    // Get Process Identifier
+    int getPID(){
+        return pid;
+    }
+
+    // Check if the PID of the Address Space is valid
+    bool isValid(){
+        return pid != DNE;
+    }
+    /* End of Additions */
+
 private:
     TranslationEntry *pageTable;	    // Assume linear page table translation
                                         // for now!
     unsigned int numPages;		        // Number of pages in the virtual
                                         // address space
+    // added pid member 
+    int pid;                            // Use the pid to get PCB from ProcessManager
 };
 
 #endif // ADDRSPACE_H

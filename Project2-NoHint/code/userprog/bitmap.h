@@ -33,9 +33,9 @@
 
 class BitMap {
 public:
-    BitMap(int nitems);		// Initialize a bitmap, with "nitems" bits
-    // initially, all bits are cleared.
-    ~BitMap();			// De-allocate bitmap
+    BitMap(int nitems);		   // Initialize a bitmap, with "nitems" bits
+                               // initially, all bits are cleared.
+    ~BitMap();			       // De-allocate bitmap
 
     void Mark(int which);   	// Set the "nth" bit
     void Clear(int which);  	// Clear the "nth" bit

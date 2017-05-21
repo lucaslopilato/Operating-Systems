@@ -72,21 +72,28 @@ AddrSpace::AddrSpace(OpenFile *executable)
         SwapHeader(&noffH);
     ASSERT(noffH.noffMagic == NOFFMAGIC);
 
-// how big is address space?
+    // how big is address space?
     size = noffH.code.size + noffH.initData.size + noffH.uninitData.size
            + UserStackSize; // we need to increase the size
     // to leave room for the stack
     numPages = divRoundUp(size, PageSize);
     size = numPages * PageSize;
 
-    ASSERT(numPages <= NumPhysPages);   // check we're not trying
-    // to run anything too big --
-    // at least until we have
-    // virtual memory
+    ASSERT(numPages <= NumPhysPages);   // Check for physical memory requirements
+    
+    /* Changes from initial code made here */
+    if((signed) numPages <= memoryManager->getFreeFrameNum())
+        this->pid = processManager->allocPid();
+    else
+        this->pid = DNE;
+    /* End of changes */
 
     DEBUG('a', "Initializing address space, num pages %d, size %d\n",
           numPages, size);
-// first, set up the translation
+    // first, set up the translation
+    
+    memoryManager->mmLock->Acquire();   // Added from original code
+
     pageTable = new TranslationEntry[numPages];
     for (i = 0; i < numPages; i++) {
         pageTable[i].virtualPage = i; // for now, virtual page # = phys page #
@@ -99,11 +106,21 @@ AddrSpace::AddrSpace(OpenFile *executable)
         // pages to be read-only
     }
 
-// zero out the entire address space, to zero the unitialized data segment
-// and the stack segment
-    bzero(machine->mainMemory, size);
+    memoryManager->mmLock->Release();   // Added from original code
 
-// then, copy in the code and data segments into memory
+    // zero out the entire address space, to zero the unitialized data segment
+    // and the stack segment
+    //bzero(machine->mainMemory, size);
+
+    /* Changes from initial code here */
+    machineLock->Acquire();
+    for(i=0; i<numPages; i++){
+        int physicalAddress = pageTable[i].physicalPage * PageSize; // Physical Address w/PageTable
+        bzero(&(machine->mainMemory[physicalAddress]), PageSize);   // Zero out memmory
+    }
+    /* End of Changes */
+
+    // then, copy in the code and data segments into memory
     if (noffH.code.size > 0) {
         DEBUG('a', "Initializing code segment, at 0x%x, size %d\n",
               noffH.code.virtualAddr, noffH.code.size);
@@ -117,7 +134,42 @@ AddrSpace::AddrSpace(OpenFile *executable)
                            noffH.initData.size, noffH.initData.inFileAddr);
     }
 
+    machineLock->Release();     // Added from original code
+
 }
+
+
+//----------------------------------------------------------------------
+// AddrSpace::AddrSpace(const AddrSpace* other)
+//  Copy Constructor to duplicate the address space
+//  ** Added from provided source code  **
+//----------------------------------------------------------------------
+
+AddrSpace::AddrSpace(const AddrSpace* other)
+{
+    this->numPages = other->numPages;
+    this->pid = processManager->allocPid();
+    memoryManager->mmLock->Acquire();
+    this->pageTable = new TranslationEntry[numPages];
+    for (unsigned int i = 0; i < numPages; i++) {
+        pageTable[i].virtualPage = other->pageTable[i].virtualPage;     //Next available virtual page
+        pageTable[i].physicalPage = memoryManager -> allocFrame();      //Next available physical frame
+        
+        int physAddrSrc = other->pageTable[i].physicalPage * PageSize;  //Pyshical Address Source
+        int physAddrDest = this->pageTable[i].physicalPage * PageSize;  //Physical Address Destination
+        
+        // Make copy
+        bcopy(&(machine->mainMemory[physAddrSrc]), &(machine->mainMemory[physAddrDest]), PageSize);
+        
+        pageTable[i].valid = TRUE;
+        pageTable[i].use = FALSE;
+        pageTable[i].dirty = FALSE;
+        pageTable[i].readOnly = FALSE;
+    }
+    memoryManager->mmLock->Release();
+}
+
+
 
 //----------------------------------------------------------------------
 // AddrSpace::~AddrSpace
@@ -126,8 +178,15 @@ AddrSpace::AddrSpace(OpenFile *executable)
 
 AddrSpace::~AddrSpace()
 {
+
+    /* Additions to original code */
+    for(unsigned int i=0; i<numPages; i++)
+        memoryManager->freeFrame(pageTable[i].physicalPage);
+    /* End of changes */
+
     delete [] pageTable;
 }
+
 
 //----------------------------------------------------------------------
 // AddrSpace::InitRegisters
@@ -200,7 +259,8 @@ int AddrSpace::Translate(int virtualAddr)
     int offset = virtualAddr % PageSize;
 
     // Make sure this is a valid virtual address
-    if (virtualAddr < 0 || page > numPages)
+    // Change was adding the (signed) casting
+    if (virtualAddr < 0 || page > (signed) numPages)
         return -1;
 
     frame = pageTable[page].physicalPage;

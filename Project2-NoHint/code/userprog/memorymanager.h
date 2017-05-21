@@ -16,6 +16,7 @@
 #define MEMORYMANAGER_H
 
 #include "bitmap.h"
+#include "../threads/synch.h"
 
 class MemoryManager {
 
@@ -25,6 +26,14 @@ public:
 
     int allocFrame();           // allocate a free frame to a process
     void freeFrame(int frame);  // free an allocated frame
+
+    /* Added to original source code */
+    int getFreeFrameNum(){
+        return frames->NumClear();
+    }
+
+    Lock *mmLock;                 // for synchronization
+    /* End of changes */
 
 private:
     BitMap *frames;             // Use a bitmap to keep track of memory usage
