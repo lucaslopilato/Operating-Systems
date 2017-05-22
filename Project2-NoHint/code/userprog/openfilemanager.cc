@@ -105,3 +105,16 @@ void OpenFileManager::reduceOpenFiles(int index)
         openFileTable[index] = NULL;
     }
 } 
+
+SysOpenFile* OpenFileManager::getFile(char* filename, int& index) {
+
+    for (int i = 2; i < OPEN_FILE_TABLE_SIZE; i++) {
+        if(openFileTable[i] != NULL && openFileTable[i]->filename != NULL){
+            if (!strcmp(filename, openFileTable[i]->filename)) {
+                index = i;
+                return openFileTable[index];
+            }
+        }
+    }
+    return NULL; // couldn't find a file by that name
+}
