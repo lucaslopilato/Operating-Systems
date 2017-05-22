@@ -42,7 +42,7 @@ OpenFileManager::~OpenFileManager()
 int OpenFileManager::addOpenFile(OpenFile* openFile, char* fileName)
 {
     int index = getFileIndex(openFile);
-    if(index != ERR_FAIL_FIND){
+    if(index == ERR_FAIL_FIND){
         if(usedFileSpace == OPEN_FILE_TABLE_SIZE)
             return ERR_FAIL_ADD;
         for(int i=0; i < OPEN_FILE_TABLE_SIZE; i++){
@@ -84,7 +84,7 @@ SysOpenFile *OpenFileManager::getOpenFile(int index)
 int OpenFileManager::getFileIndex(OpenFile* file)
 {
     for(int i=0; i< OPEN_FILE_TABLE_SIZE; i++){
-        if(openFileTable[i]->openFile == file && openFileTable[i] != NULL)
+        if(openFileTable[i] != NULL && openFileTable[i]->openFile == file)
                 return i;
     }
     return ERR_FAIL_FIND;
@@ -105,3 +105,16 @@ void OpenFileManager::reduceOpenFiles(int index)
         openFileTable[index] = NULL;
     }
 } 
+
+SysOpenFile* OpenFileManager::getFile(char* filename, int& index) {
+
+    for (int i = 2; i < OPEN_FILE_TABLE_SIZE; i++) {
+        if(openFileTable[i] != NULL && openFileTable[i]->filename != NULL){
+            if (!strcmp(filename, openFileTable[i]->filename)) {
+                index = i;
+                return openFileTable[index];
+            }
+        }
+    }
+    return NULL; // couldn't find a file by that name
+}
