@@ -10,9 +10,9 @@
 
 OpenFileManager::OpenFileManager()
 {
-   openFileTable = new SysOpenFile*[OPEN_FILE_TABLE_SIZE];
-   for(int i=0; i<OPEN_FILE_TABLE_SIZE; i++)
-    openFileTable[i] = NULL;
+   //openFileTable = new SysOpenFile*[OPEN_FILE_TABLE_SIZE];
+   //for(int i=0; i<OPEN_FILE_TABLE_SIZE; i++)
+   // openFileTable[i] = NULL;
    consoleWriteLock = new Lock("consoleWriteLock");
    usedFileSpace = 0;    // added
 }
@@ -105,8 +105,8 @@ void OpenFileManager::reduceOpenFiles(int index)
         openFileTable[index] = NULL;
     }
 } 
-
-SysOpenFile* OpenFileManager::getFile(char* filename, int& index) {
+/*
+SysOpenFile* OpenFileManager::getFile(char* filename, int &index) {
 
     for (int i = 2; i < OPEN_FILE_TABLE_SIZE; i++) {
         if(openFileTable[i] != NULL && openFileTable[i]->filename != NULL){
@@ -117,4 +117,4 @@ SysOpenFile* OpenFileManager::getFile(char* filename, int& index) {
         }
     }
     return NULL; // couldn't find a file by that name
-}
+}*/

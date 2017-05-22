@@ -67,8 +67,10 @@ void PCB::setExitStatus(int status)
 int PCB::addOpenFile(UserOpenFile* openFile)
 {
     for(int i=3; i< MAX_FILES; i++){
-        if(openFiles[i] == NULL)
+        if(openFiles[i] == NULL){
+            openFiles[i] = openFile;
             return i;
+        }
     }
     return -1;
 }
