@@ -24,33 +24,35 @@ void
 StartProcess(char *filename)
 {
     OpenFile *executable = fileSystem->Open(filename);
-    AddrSpace *space;
-
     if (executable == NULL) {
-        printf("Unable to open file %s\n", filename);
-        return;
+    printf("Unable to open file %s\n", filename);
+    return;
     }
-    space = new AddrSpace(executable);
+    
+    int newPID = processManager->getPID();
+    PCB* newPCB = new PCB(newPID, -1);
+    newPCB->status = P_RUNNING;
+    processManager->addProcess(newPCB, newPID);
+    AddrSpace* space = new AddrSpace(executable, newPCB);    
     currentThread->space = space;
 
-    /* Additions to original Source Code */
-    int currentPID = space->getPID();
-    int parentPID = -1;
-    PCB *pcb = new PCB(currentPID, parentPID);
-    pcb->thread = currentThread;
-    processManager->trackPCB(currentPID,pcb);
-    /* End of Additions */
+    delete executable;          // close file
 
-    delete executable;			// close file
+    if ((space->getPCB())->getPID() == -1) {
+        printf("Unable to acquire valid PCB for process. Terminating.\n");
+        delete space;
+        return;
+    }
 
-    space->InitRegisters();		// set the initial register values
-    space->RestoreState();		// load page table register
+    space->InitRegisters();     // set the initial register values
+    space->RestoreState();      // load page table register
 
-    machine->Run();			// jump to the user progam
-    ASSERT(FALSE);			// machine->Run never returns;
-    // the address space exits
-    // by doing the syscall "exit"
+    machine->Run();         // jump to the user progam
+    ASSERT(FALSE);          // machine->Run never returns;
+                    // the address space exits
+                    // by doing the syscall "exit"
 }
+
 
 // Data structures needed for the console test.  Threads making
 // I/O requests wait on a Semaphore to delay until the I/O completes.
