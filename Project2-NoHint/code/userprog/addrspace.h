@@ -26,7 +26,7 @@ public:
                                         // initializing it with the program
                                         // stored in the file "executable"
 
-    AddrSpace(const AddrSpace* other);  // Copy Constructor A
+    AddrSpace(const AddrSpace* other);  // Copy Constructor Added
     
     ~AddrSpace();			            // De-allocate an address space
 

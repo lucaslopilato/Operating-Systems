@@ -33,6 +33,14 @@ StartProcess(char *filename)
     space = new AddrSpace(executable);
     currentThread->space = space;
 
+    /* Additions to original Source Code */
+    int currentPID = space->getPID();
+    int parentPID = -1;
+    PCB *pcb = new PCB(currentPID, parentPID);
+    pcb->thread = currentThread;
+    processManager->trackPCB(currentPID,pcb);
+    /* End of Additions */
+
     delete executable;			// close file
 
     space->InitRegisters();		// set the initial register values

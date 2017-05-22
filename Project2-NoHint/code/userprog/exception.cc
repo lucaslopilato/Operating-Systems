@@ -88,15 +88,6 @@ ExceptionHandler(ExceptionType which)
 
     if (which == SyscallException) {
         switch (type) {
-            case SC_Halt:
-                DEBUG('a', "Shutdown, initiated by user program.\n");
-                interrupt->Halt();
-                break;
-            case SC_Fork:
-                DEBUG('a', "Fork() system call invoked.\n");
-                result = doFork();
-                machine->WriteRegister(2, result);
-                break;
             case SC_Exit:
                 DEBUG('a', "Exit() system call invoked.\n");
                 doExit();
@@ -105,6 +96,20 @@ ExceptionHandler(ExceptionType which)
                 DEBUG('a', "Exec() system call invoked.\n");
                 readFileNameUserToKernel(fileName);
                 result = doExec(fileName);
+                machine->WriteRegister(2, result);
+                break;
+            case SC_Write:
+                DEBUG('a', "Write() system call invoked.\n");
+                doWrite();
+                break;
+            // Cases below added from original source code    
+            case SC_Halt:
+                DEBUG('a', "Shutdown, initiated by user program.\n");
+                interrupt->Halt();
+                break;
+            case SC_Fork:
+                DEBUG('a', "Fork() system call invoked.\n");
+                result = doFork();
                 machine->WriteRegister(2, result);
                 break;
             case SC_Yield:
@@ -131,10 +136,6 @@ ExceptionHandler(ExceptionType which)
                 DEBUG('a', "Read() system call invoked.\n");
                 result = doRead();
                 machine->WriteRegister(2, result);
-                break;
-            case SC_Write:
-                DEBUG('a', "Write() system call invoked.\n");
-                doWrite();
                 break;
             case SC_Close:
                 DEBUG('a', "Close() system call invoked.\n");
@@ -163,19 +164,18 @@ ExceptionHandler(ExceptionType which)
 
 void doExit()
 {
-    int status = machine->ReadRegister(4);  // Get status code
-    int currentPID = currentThread->space->getPID();
-    PCB* currentPCB = processManager->getPCB(currentPID);
-    currentPCB->setExitStatus(status);
+    int status = machine->ReadRegister(4);                  // Get status code
+    int currentPID = currentThread->space->getPID();        // Get PID of Thread
+    PCB* currentPCB = processManager->getPCB(currentPID);   // Get PCB of Thread
+    currentPCB->setExitStatus(status);                      // Set exit status of this process
 
     delete currentThread->space;
-    currentThread->space = NULL;
+    currentThread->space = NULL;                            // Clean space used from process
 
-    processManager->waitStateOnChild(currentPID);
+    processManager->waitStateOnChild(currentPID);           // Wait on Child process before wiping
+    processManager->broadcastOnExit(currentPID);            // Notify all processes this one is done
 
-    processManager->broadcastOnExit(currentPID);
-
-    fprintf(stderr, "Process %d exiting\n", currentPID);
+    fprintf(stderr, "Process %d exiting\n", currentPID);    // Debug statement
     if(currentPID == 0)
         interrupt->Halt();
 
@@ -185,15 +185,16 @@ void doExit()
 
 //----------------------------------------------------------------------
 // execLauncher
+// ** Edited **
 //----------------------------------------------------------------------
 
 void execLauncher(int unused)
 {
     //AddrSpace *curAddrSpace = currentThread->space;
-    //curAddrSpace->InitRegisters();
+    //curAddrSpace->InitRegisters();                
     //curAddrSpace->RestoreState();
-    currentThread->space->InitRegisters();
-    currentThread->space->RestoreState();
+    currentThread->space->InitRegisters();      // get registers of the address space of the thread
+    currentThread->space->RestoreState();       // restore data within address space of curr thread
     machine->Run();
 }
 
@@ -253,6 +254,7 @@ int doExec(char *fileName)
     //childPcb->thread->space = new AddrSpace(execFile);
     
     /* Additions here */
+    // Debug statement
     if(execFile == NULL){
         fprintf(stderr, "Couldn't open file %s to execute. Terminating process\n", fileName);
         return -1;
@@ -266,16 +268,15 @@ int doExec(char *fileName)
     }
 
     // Initializing PCB
-    childPid = childSpace->getPID();
-    parentPid = currentThread->space->getPID();
-    childPcb = new PCB(childPid, parentPid);
-    processManager->trackPCB(childPid, childPcb);
+    childPid = childSpace->getPID();                // get Child PID
+    parentPid = currentThread->space->getPID();     // get Parent PID
+    childPcb = new PCB(childPid, parentPid);        // get Child PCB
+    processManager->trackPCB(childPid, childPcb);   // link Child PID and PCB
 
-    // Create kernel thread to manage process
-    childThread = new Thread(fileName);
+    childThread = new Thread(fileName);             // Create kernel thread to manage process
 
-    childThread->space = childSpace;
-    childPcb->thread = childThread;
+    childThread->space = childSpace;                // set ChildThread address space
+    childPcb->thread = childThread;                 // set the Child Thread
 
     /* End of Additions */
     delete execFile;
@@ -296,7 +297,7 @@ int doExec(char *fileName)
 }
 
 //----------------------------------------------------------------------
-// doWrite
+// doWrite (implemented in provided source code)
 //----------------------------------------------------------------------
 
 void doWrite()
@@ -345,7 +346,7 @@ void doWrite()
 
 SpaceId doFork()
 {
-    if(currentThread->space->getPageNum() > (unsigned)memoryManager->getFreeFrameNum()  || processManager->getPIDsFree() <= 0)
+    if(currentThread->space->getPageNum() > memoryManager->getFreeFrameNum()  || processManager->getPIDsFree() <= 0)
         return -1;
 
     int funcAddr = machine->ReadRegister(4);                        // func Address in 4th register
@@ -353,19 +354,17 @@ SpaceId doFork()
     AddrSpace *copyAddrSpace = new AddrSpace(currentThread->space); // duplicate address space of process
 
     int parentPID, childPID;
-    parentPID = currentThread->space->getPID();
-    childPID = copyAddrSpace->getPID();
+    parentPID = currentThread->space->getPID();                     // get Parent PID
+    childPID = copyAddrSpace->getPID();                             // get Child PID
 
-    fprintf(stderr, "Process %d forked process %d\n",parentPID,childPID);
+    fprintf(stderr, "Process %d forked process %d\n",parentPID,childPID);   //Debuging
 
     PCB *childPCB = processManager->getPCB(parentPID)->forkHelp(childPID,parentPID);
     processManager->trackPCB(childPID, childPCB);       // link childPCB to childPID
     childPCB->thread = childThread;                     // set child thread
     childPCB->thread->space = copyAddrSpace;            // set duplicate address space to child
-    // new thread creates a bridge to execute user function
-    childPCB->thread->Fork(ForkBridge, funcAddr);
-    // Current thread yields to new thread
-    doYield();
+    childPCB->thread->Fork(ForkBridge, funcAddr);       // new thread creates a bridge to execute user function
+    doYield();                                          // Current thread yields to new thread
     return childPID;
 }
 
@@ -376,15 +375,15 @@ SpaceId doFork()
 
 void ForkBridge(int newProcess)
 {
-    currentThread->space->InitRegisters();
-    currentThread->space->RestoreState();
+    currentThread->space->InitRegisters();                  // Get new registers
+    currentThread->space->RestoreState();                   // Copy the Address Space
 
-    machine->WriteRegister(PCReg, newProcess);
-    machine->WriteRegister(PrevPCReg, newProcess - 4);
-    machine->WriteRegister(NextPCReg, newProcess + 4);
+    machine->WriteRegister(PCReg, newProcess);              // set PC process and registers
+    machine->WriteRegister(PrevPCReg, newProcess - 4);      
+    machine->WriteRegister(NextPCReg, newProcess + 4);      
 
     machine->Run();
-    ASSERT(FALSE);  // shouldn't get here
+    ASSERT(FALSE);  // There is an issue with the code if it gets here
 }
 
 
@@ -394,9 +393,9 @@ void ForkBridge(int newProcess)
 
 void doYield()
 {
-    currentThread->SaveUserState();
-    currentThread->Yield();
-    currentThread->RestoreUserState();
+    currentThread->SaveUserState();     // Save current state
+    currentThread->Yield();             // Yeild the kernel thread
+    currentThread->RestoreUserState();  // Restore user process registers and page table on resume
 }
 
 
@@ -407,6 +406,8 @@ void doYield()
 int doJoin()
 {
     int childPID = machine->ReadRegister(4);
+
+    // Wait on Child Process to return its exits Status
     int childExitStatus = processManager->waitStateOn(childPID, currentThread->space->getPID());
     return childExitStatus;
 }
@@ -418,7 +419,8 @@ int doJoin()
 
 void doCreate(char* filename)
 {
-    //TODO
+    // Use Create() function which returns a boolean, but also opens a file
+    bool createFile = fileSystem->Create(filename, DEFAULT_SIZE);
 }
 
 

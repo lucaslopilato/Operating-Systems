@@ -82,7 +82,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
     ASSERT(numPages <= NumPhysPages);   // Check for physical memory requirements
     
     /* Changes from initial code made here */
-    if((signed) numPages <= memoryManager->getFreeFrameNum())
+    if(numPages <= memoryManager->getFreeFrameNum())
         this->pid = processManager->allocPid();
     else
         this->pid = DNE;
@@ -97,7 +97,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
     pageTable = new TranslationEntry[numPages];
     for (i = 0; i < numPages; i++) {
         pageTable[i].virtualPage = i; // for now, virtual page # = phys page #
-        pageTable[i].physicalPage = i;
+        pageTable[i].physicalPage = memoryManager->allocFrame();
         pageTable[i].valid = TRUE;
         pageTable[i].use = FALSE;
         pageTable[i].dirty = FALSE;
@@ -151,9 +151,9 @@ AddrSpace::AddrSpace(const AddrSpace* other)
     this->pid = processManager->allocPid();
     memoryManager->mmLock->Acquire();
     this->pageTable = new TranslationEntry[numPages];
-    for (unsigned int i = 0; i < numPages; i++) {
+    for (int i = 0; i < numPages; i++) {
         pageTable[i].virtualPage = other->pageTable[i].virtualPage;     //Next available virtual page
-        pageTable[i].physicalPage = memoryManager -> allocFrame();      //Next available physical frame
+        pageTable[i].physicalPage = memoryManager->allocFrame();        //Next available physical frame
         
         int physAddrSrc = other->pageTable[i].physicalPage * PageSize;  //Pyshical Address Source
         int physAddrDest = this->pageTable[i].physicalPage * PageSize;  //Physical Address Destination
@@ -180,7 +180,7 @@ AddrSpace::~AddrSpace()
 {
 
     /* Additions to original code */
-    for(unsigned int i=0; i<numPages; i++)
+    for(int i=0; i<numPages; i++)
         memoryManager->freeFrame(pageTable[i].physicalPage);
     /* End of changes */
 
@@ -260,7 +260,7 @@ int AddrSpace::Translate(int virtualAddr)
 
     // Make sure this is a valid virtual address
     // Change was adding the (signed) casting
-    if (virtualAddr < 0 || page > (signed) numPages)
+    if (virtualAddr < 0 || page > numPages)
         return -1;
 
     frame = pageTable[page].physicalPage;

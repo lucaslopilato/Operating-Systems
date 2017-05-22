@@ -40,7 +40,7 @@ int MemoryManager::allocFrame()
     if(fIndex == -1){
         DEBUG('m', "Couldn't find a page in the page table.\n");
         ASSERT(FALSE);
-        return -1;
+        //return -1;
     } else{
         return fIndex;
     }

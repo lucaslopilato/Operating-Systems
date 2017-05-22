@@ -19,8 +19,8 @@ ProcessManager::ProcessManager()
 
     for(int i=0; i < MAX_PROCESSES; i++){
         pcbList[i] = NULL;
-        lockList[i] = new Lock("Exit Lock List");
-        conditionList[i] = new Condition("Exit Signal List");
+        lockList[i] = new Lock("Exit Lock");
+        conditionList[i] = new Condition("Exit Signal");
     }
 }
 
