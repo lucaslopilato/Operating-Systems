@@ -35,6 +35,8 @@
 
 #define MAX_FILENAME 256
 #define DEFAULT_SIZE 512
+#define USER_READ 0 // passed as type for userReadWrite
+#define USER_WRITE 1 // passed as type for userReadWrite
 
 // Implemented already 
 void doExit();
@@ -55,6 +57,7 @@ void doClose();
 // Not required functions for implementation, just helpers for this attempt
 void readFileNameUserToKernel(char* filename);
 int moveBytesMemoryToKernel(int virtualAddress, char* bufferspace, int size);
+int userReadWrite(int virtAddr, char* buffer, int size, int type);
 /* End of Additions */
 
 //----------------------------------------------------------------------
@@ -453,8 +456,41 @@ int doOpen(char* filename)
 
 int doRead()
 {
-    //TODO
-    return -1;
+    int readAddr = machine->ReadRegister(4);
+    int size = machine->ReadRegister(5);
+    int fileID = machine->ReadRegister(6);
+    char* buffer = new char[size + 1];
+    int numActualBytesRead = size;
+
+    if (fileID == ConsoleInput) {//Read data from the console to the system buffer
+        int bytesRead = 0;
+        while (bytesRead < size) {
+            //buffer[bytesRead] = getchar();
+            buffer[bytesRead] = UserConsoleGetChar();
+            bytesRead++;
+        }
+    }
+    else {
+
+        //Read data from the file to the system buffer
+        UserOpenFile* userFile = processManager->getPCB(currentThread->space->getPID())->getOpenFile(fileID);
+
+        //Now from openFileManger, find the SystemOpenFile data structure for this userFile.
+        SysOpenFile*  sysFile = openFileManager->getFile(userFile->filename, userFile->fileTableIndex);    
+        
+        //Use ReadAt() to read the file at selected offset to this system buffer buffer[]
+        sysFile->openFile->ReadAt(buffer, size+1, 0);
+
+        // Adust the offset in userFile to reflect my current position.
+        userFile->currentPosition = size+1;
+    }
+
+    printf("read addr: %d\n", readAddr);
+    //Now copy data from the system buffer to the targted main memory space using userReadWrite()
+    userReadWrite(readAddr, buffer, size+1, USER_READ);
+
+    delete [] buffer;
+    return numActualBytesRead;
 }
 
 
@@ -527,3 +563,47 @@ int moveBytesMemoryToKernel(int virtualAddress, char* bufferspace, int size)
 
     return bytesTransfered;
 }
+
+//----------------------------------------------------------------------
+// Helper function that either reads from main mem into a buffer or 
+// writes from a buffer into main mem.
+//----------------------------------------------------------------------
+
+int userReadWrite(int virtAddr, char* buffer, int size, int type) {
+
+    int physAddr = 0;
+    int numBytesFromPSLeft = 0;
+    int numBytesCopied = 0;
+    int numBytesToCopy = 0;
+
+    if (type == USER_READ) { // Read and copy data from the system buffer to the user space in main memory
+        while (size > 0) {
+            //Translate the virtual address to phyiscal address physAddr 
+            //Implement me
+            numBytesFromPSLeft = PageSize - physAddr % PageSize;
+            numBytesToCopy = (numBytesFromPSLeft < size) ? numBytesFromPSLeft : size;
+            bcopy(buffer + numBytesCopied, machine->mainMemory + physAddr, numBytesToCopy);
+            numBytesCopied += numBytesToCopy;
+            size -= numBytesToCopy;
+            virtAddr += numBytesToCopy;
+        }
+    }
+    else if (type == USER_WRITE) { // Copy data from the user's main memory to the system buffer
+        while (size > 0) {
+            //Translate the virtual address to phyiscal address physAddr 
+            //Implement me
+            numBytesFromPSLeft = PageSize - physAddr % PageSize;
+            numBytesToCopy = (numBytesFromPSLeft < size) ? numBytesFromPSLeft : size;
+            bcopy(machine->mainMemory + physAddr, buffer + numBytesCopied, numBytesToCopy);
+            numBytesCopied += numBytesToCopy;
+            size -= numBytesToCopy;
+            virtAddr += numBytesToCopy;
+        }
+    }
+    else {
+        //printf ("Invalid type passed in.\n");
+        ASSERT(FALSE);
+    }
+    return numBytesCopied; 
+}
+
