@@ -29,16 +29,17 @@ StartProcess(char *filename)
     return;
     }
     
-    int newPID = processManager->getPID();
+    int newPID = processManager->allocPid();
     PCB* newPCB = new PCB(newPID, -1);
-    newPCB->status = P_RUNNING;
-    processManager->addProcess(newPCB, newPID);
-    AddrSpace* space = new AddrSpace(executable, newPCB);    
+    //newPCB->status = P_RUNNING;
+    processManager->trackPCB(newPID, newPCB);
+    AddrSpace* space = new AddrSpace(executable);    
     currentThread->space = space;
+
 
     delete executable;          // close file
 
-    if ((space->getPCB())->getPID() == -1) {
+    if (space->getPID() == -1) {
         printf("Unable to acquire valid PCB for process. Terminating.\n");
         delete space;
         return;
