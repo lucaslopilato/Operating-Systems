@@ -447,9 +447,12 @@ int doRead()
 
         // Adust the offset in userFile to reflect my current position.
         //userFile->currentPosition = size+1;
-        userFile->currentPosition += numActualBytesRead;
+        userFile->currentPosition += size;
 
     }
+
+    //Null Terminate String
+    buffer[size] = '\0';
 
     //Now copy data from the system buffer to the targted main memory space using userReadWrite()
     userReadWrite(readAddr, buffer, size, USER_READ);
@@ -536,7 +539,7 @@ int moveBytesMemoryToKernel(int virtualAddress, char* bufferspace, int size)
 
 int userReadWrite(int virtAddr, char* buffer, int size, int type) {
 
-    int physAddr = currentThread->space->Translate(virtAddr);
+    int physAddr = 0;
     int numBytesFromPSLeft = 0;
     int numBytesCopied = 0;
     int numBytesToCopy = 0;
@@ -544,6 +547,8 @@ int userReadWrite(int virtAddr, char* buffer, int size, int type) {
     if (type == USER_READ) { // Read and copy data from the system buffer to the user space in main memory
         while (size > 0) {
             //Translate the virtual address to phyiscal address physAddr 
+            physAddr = currentThread->space->Translate(virtAddr);
+
             numBytesFromPSLeft = PageSize - physAddr % PageSize;
             numBytesToCopy = (numBytesFromPSLeft < size) ? numBytesFromPSLeft : size;
             bcopy(buffer + numBytesCopied, machine->mainMemory + physAddr, numBytesToCopy);
@@ -555,6 +560,8 @@ int userReadWrite(int virtAddr, char* buffer, int size, int type) {
     else if (type == USER_WRITE) { // Copy data from the user's main memory to the system buffer
         while (size > 0) {
             //Translate the virtual address to phyiscal address physAddr  
+            physAddr = currentThread->space->Translate(virtAddr);
+
             numBytesFromPSLeft = PageSize - physAddr % PageSize;
             numBytesToCopy = (numBytesFromPSLeft < size) ? numBytesFromPSLeft : size;
             bcopy(machine->mainMemory + physAddr, buffer + numBytesCopied, numBytesToCopy);
