@@ -175,7 +175,6 @@ void doExit()
     currentThread->space = NULL;
 
     processManager->waitStateOnChild(currentPID);
-
     processManager->broadcastOnExit(currentPID);
 
     fprintf(stderr, "Process %d exiting\n", currentPID);
@@ -218,42 +217,11 @@ int doExec(char *fileName)
     Thread* childThread;    // Added to original code
 
 
-    /* Not necessary, refer to hint code provided
-    // First, we need to read the filename of the program to execute out of
-    // user memory. This is complicated by the fact that the name might lie
-    // across a page boundary.
-    do {
-        // Find this portion of filename in physical memory
-        filenameVirtAddr += bytesCopied;
-        filenamePhysAddr = currentThread->space->Translate(filenameVirtAddr);
-        userPtr = machine->mainMemory + filenamePhysAddr;
-        // Find the end of the page
-        endOfPage = machine->mainMemory + (filenamePhysAddr / PageSize + 1)
-                                           * PageSize;
-        // Copy characters until the string or page ends
-        while (*userPtr != '\0' && userPtr != endOfPage) {
-            *kernelPtr++ = *userPtr++;
-            ++bytesCopied;
-        }
-    } while (*userPtr != '\0' && bytesCopied != 0);
-    *kernelPtr = '\0';
-    // Next we need to create a PCB for the new process. The PCB must be
-    // initialized with the parent's PID (i.e. that of the current process)
-    // and the newly created child's PID.
-    parentPid = 0;
-    childPid = processManager->allocPid();
-    childPcb = new PCB(parentPid, childPid);
-    // The new process needs a kernel thread by which we can manage its state
-    childPcb->thread = new Thread("child of Exec()");
-    */
-
-
     // Finally it needs an address space. We will initialize the address
     // space by loading in the program found in the executable file that was
     // passed in as the first argument.
 
     execFile = fileSystem->Open(fileName);
-    //childPcb->thread->space = new AddrSpace(execFile);
     
     /* Additions here */
     if(execFile == NULL){
@@ -307,35 +275,28 @@ void doWrite()
     int userBufVirtAddr = machine->ReadRegister(4);
     int userBufSize = machine->ReadRegister(5);
     int dstFile = machine->ReadRegister(6);
+    int bytesActuallyWriten = 0;
 
-    int i, userBufPhysAddr, bytesToEndOfPage, bytesToCopy, bytesCopied = 0;
+    //int i, userBufPhysAddr, bytesToEndOfPage, bytesToCopy, bytesCopied = 0;
     char *kernelBuf = new char[userBufSize + 1];
 
     if (dstFile == ConsoleOutput) {
-
-        // Copy bytes from user memory into kernel memory
-        while (bytesCopied < userBufSize) {
-
-            // Perform virtual to physical address translation
-            userBufPhysAddr = currentThread->space->Translate(userBufVirtAddr + bytesCopied);
-
-            // Determine how many bytes we can read from this page
-            bytesToEndOfPage = PageSize - userBufPhysAddr % PageSize;
-            if (userBufSize < bytesToEndOfPage)
-                bytesToCopy = userBufSize;
-            else
-                bytesToCopy = bytesToEndOfPage;
-
-            // Copy bytes into kernel buffer
-            memcpy(&kernelBuf[bytesCopied], &machine->mainMemory[userBufPhysAddr], bytesToCopy);
-            bytesCopied += bytesToCopy;
-        }
-
-        // Write buffer to console (writes should be atomic)
+        moveBytesMemoryToKernel(userBufVirtAddr, kernelBuf, userBufSize);
+        kernelBuf[userBufSize] = 0;
         openFileManager->consoleWriteLock->Acquire();
-        for (i = 0; i < userBufSize; ++i)
+        for(int i=0; i < userBufSize; i++){
             UserConsolePutChar(kernelBuf[i]);
+        }
         openFileManager->consoleWriteLock->Release();
+    }
+    else{
+        moveBytesMemoryToKernel(userBufVirtAddr, kernelBuf, userBufSize);
+        int currentPID = currentThread->space->getPID();
+        UserOpenFile* uoFile = processManager->getPCB(currentPID)->getOpenFile(dstFile);
+        OpenFile* oFile = openFileManager->getOpenFile(uoFile->fileTableIndex)->openFile;
+
+        bytesActuallyWriten = oFile->WriteAt(kernelBuf, userBufSize, uoFile->currentPosition);
+        uoFile->currentPosition += bytesActuallyWriten;
     }
 
     delete[] kernelBuf;
@@ -420,6 +381,7 @@ int doJoin()
 void doCreate(char* filename)
 {
     //TODO
+    bool created = fileSystem->Create(filename, DEFAULT_SIZE);
 }
 
 
@@ -460,10 +422,10 @@ int doRead()
     int size = machine->ReadRegister(5);
     int fileID = machine->ReadRegister(6);
     char* buffer = new char[size + 1];
-    int numActualBytesRead = size;
+    int numActualBytesRead; //= size;
+    int bytesRead = 0;
 
     if (fileID == ConsoleInput) {//Read data from the console to the system buffer
-        int bytesRead = 0;
         while (bytesRead < size) {
             //buffer[bytesRead] = getchar();
             buffer[bytesRead] = UserConsoleGetChar();
@@ -476,15 +438,15 @@ int doRead()
         UserOpenFile* userFile = processManager->getPCB(currentThread->space->getPID())->getOpenFile(fileID);
 
         //Now from openFileManger, find the SystemOpenFile data structure for this userFile.
-        SysOpenFile*  sysFile = openFileManager->getFile(userFile->filename, userFile->fileTableIndex);    
-
+        //SysOpenFile*  sysFile = openFileManager->getFile(userFile->filename, userFile->fileTableIndex);    
+        OpenFile* opFile = openFileManager->getOpenFile(userFile->fileTableIndex)->openFile;
 
         //Use ReadAt() to read the file at selected offset to this system buffer buffer[]
-        sysFile->openFile->ReadAt(buffer, size+1, 0);
+        numActualBytesRead = opFile->ReadAt(buffer, size, userFile->currentPosition);
 
         // Adust the offset in userFile to reflect my current position.
-        userFile->currentPosition = size+1;
-
+        //userFile->currentPosition = size+1;
+        userFile->currentPosition += numActualBytesRead;
 
     }
 
@@ -530,11 +492,11 @@ void readFileNameUserToKernel(char* filename)
 {
 
     int currentPosition = 0;
-    int filenameArg = machine->ReadRegister(4);
+    int filenameA = machine->ReadRegister(4);
 
     do{
-        moveBytesMemoryToKernel(filenameArg, filename+currentPosition, 1);
-        filenameArg++;
+        moveBytesMemoryToKernel(filenameA, filename+currentPosition, 1);
+        filenameA++;
     } while (filename[currentPosition++] != 0);
 
     filename[currentPosition] = 0;
@@ -591,7 +553,7 @@ int userReadWrite(int virtAddr, char* buffer, int size, int type) {
     }
     else if (type == USER_WRITE) { // Copy data from the user's main memory to the system buffer
         while (size > 0) {
-            //Translate the virtual address to phyiscal address physAddr 
+            //Translate the virtual address to phyiscal address physAddr  
             numBytesFromPSLeft = PageSize - physAddr % PageSize;
             numBytesToCopy = (numBytesFromPSLeft < size) ? numBytesFromPSLeft : size;
             bcopy(machine->mainMemory + physAddr, buffer + numBytesCopied, numBytesToCopy);

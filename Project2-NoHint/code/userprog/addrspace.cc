@@ -151,7 +151,7 @@ AddrSpace::AddrSpace(const AddrSpace* other)
     this->pid = processManager->allocPid();
     memoryManager->mmLock->Acquire();
     this->pageTable = new TranslationEntry[numPages];
-    for (unsigned int i = 0; i < numPages; i++) {
+    for (int i = 0; i < numPages; i++) {
         pageTable[i].virtualPage = other->pageTable[i].virtualPage;     //Next available virtual page
         pageTable[i].physicalPage = memoryManager -> allocFrame();      //Next available physical frame
         
@@ -260,7 +260,7 @@ int AddrSpace::Translate(int virtualAddr)
 
     // Make sure this is a valid virtual address
     // Change was adding the (signed) casting
-    if (virtualAddr < 0 || page > (signed) numPages)
+    if (virtualAddr < 0 || page > numPages)
         return -1;
 
     frame = pageTable[page].physicalPage;
