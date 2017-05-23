@@ -421,12 +421,13 @@ int doRead()
     int readAddr = machine->ReadRegister(4);
     int size = machine->ReadRegister(5);
     int fileID = machine->ReadRegister(6);
+
     char* buffer = new char[size + 1];
     int numActualBytesRead; //= size;
     int bytesRead = 0;
 
     if (fileID == ConsoleInput) {//Read data from the console to the system buffer
-        while (bytesRead < size) {
+        while (bytesRead < size && UserConsoleGetChar() != '\n') {
             //buffer[bytesRead] = getchar();
             buffer[bytesRead] = UserConsoleGetChar();
             bytesRead++;
@@ -451,7 +452,7 @@ int doRead()
     }
 
     //Now copy data from the system buffer to the targted main memory space using userReadWrite()
-    userReadWrite(readAddr, buffer, size+1, USER_READ);
+    userReadWrite(readAddr, buffer, size, USER_READ);
 
     delete [] buffer;
     return numActualBytesRead;
