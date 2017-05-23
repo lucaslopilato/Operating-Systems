@@ -380,7 +380,6 @@ int doJoin()
 
 void doCreate(char* filename)
 {
-    //TODO
     bool created = fileSystem->Create(filename, DEFAULT_SIZE);
 }
 
@@ -391,7 +390,6 @@ void doCreate(char* filename)
 
 int doOpen(char* filename)
 {
-    //TODO
     UserOpenFile* userOpenFile;
     int fileDescr;
 
