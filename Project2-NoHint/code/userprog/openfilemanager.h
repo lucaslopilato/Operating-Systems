@@ -19,6 +19,8 @@ public:
 
     int addOpenFile(OpenFile* openFile, char* fileName);
     SysOpenFile *getOpenFile(int index);
+    SysOpenFile *getFile(char* filename, int& index);
+
 
     /* Added to original code */ 
     void reduceOpenFiles(int index);

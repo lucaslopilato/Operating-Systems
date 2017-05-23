@@ -29,13 +29,12 @@ StartProcess(char *filename)
     return;
     }
     
-    int newPID = processManager->allocPid();
+    AddrSpace* space = new AddrSpace(executable);    
+    int newPID = space->getPID();
     PCB* newPCB = new PCB(newPID, -1);
     //newPCB->status = P_RUNNING;
     processManager->trackPCB(newPID, newPCB);
-    AddrSpace* space = new AddrSpace(executable);    
     currentThread->space = space;
-
 
     delete executable;          // close file
 

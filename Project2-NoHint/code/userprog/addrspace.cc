@@ -110,7 +110,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
 
     // zero out the entire address space, to zero the unitialized data segment
     // and the stack segment
-    //bzero(machine->mainMemory, size);
+    bzero(machine->mainMemory, size);
 
     /* Changes from initial code here */
     machineLock->Acquire();
