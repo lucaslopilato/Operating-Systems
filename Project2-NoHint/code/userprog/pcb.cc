@@ -44,7 +44,7 @@ PCB::~PCB()
 
 int PCB::getExitStatus()
 {
-    return this->exitStatus;
+    return exitStatus;
 }
 
 

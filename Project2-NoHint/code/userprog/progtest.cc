@@ -13,6 +13,7 @@
 #include "console.h"
 #include "addrspace.h"
 #include "synch.h"
+#include "pcb.h"
 
 //----------------------------------------------------------------------
 // StartProcess
@@ -29,21 +30,27 @@ StartProcess(char *filename)
     return;
     }
     
-    AddrSpace* space = new AddrSpace(executable);    
-    int newPID = space->getPID();
-    PCB* newPCB = new PCB(newPID, -1);
-    //newPCB->status = P_RUNNING;
-    processManager->trackPCB(newPID, newPCB);
+    AddrSpace *space;
+    
+    space = new AddrSpace(executable);    
     currentThread->space = space;
 
+
+    int thisPID = space->getPID();
+    int parentPID = ERR_NO_PARENT_PID;
+    PCB *pcb = new PCB(thisPID, parentPID);
+    pcb->thread = currentThread;
+    processManager->trackPCB(thisPID, pcb);
+    
     delete executable;          // close file
 
+/*
     if (space->getPID() == -1) {
         printf("Unable to acquire valid PCB for process. Terminating.\n");
         delete space;
         return;
     }
-
+*/
     space->InitRegisters();     // set the initial register values
     space->RestoreState();      // load page table register
 

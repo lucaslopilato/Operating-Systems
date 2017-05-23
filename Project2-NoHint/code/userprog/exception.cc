@@ -205,11 +205,7 @@ void execLauncher(int unused)
 
 int doExec(char *fileName)
 {
-    //int filenameVirtAddr = machine->ReadRegister(4);
-    //int filenamePhysAddr, bytesCopied = 0;
-    //char *filename = new char [MAX_FILENAME + 1], *kernelPtr = filename;
-    //char *userPtr, *endOfPage;
-
+   
     PCB *childPcb;
     int parentPid, childPid;
     OpenFile *execFile;
@@ -262,10 +258,10 @@ int doExec(char *fileName)
     // implementation once you implement multiple address spaces.
     //currentThread->Finish();
     doYield();
+    //doExit();
     // We shouldn't reach this point in the code...
     return childPid;
 }
-
 //----------------------------------------------------------------------
 // doWrite
 //----------------------------------------------------------------------
@@ -495,15 +491,15 @@ void doClose()
 void readFileNameUserToKernel(char* filename)
 {
 
-    int currentPosition = 0;
+    int currPosition = 0;
     int filenameA = machine->ReadRegister(4);
 
     do{
-        moveBytesMemoryToKernel(filenameA, filename+currentPosition, 1);
+        moveBytesMemoryToKernel(filenameA, filename+currPosition, 1);
         filenameA++;
-    } while (filename[currentPosition++] != 0);
+    } while (filename[currPosition++] != 0);
 
-    filename[currentPosition] = 0;
+    filename[currPosition] = 0;
 }
 
 
