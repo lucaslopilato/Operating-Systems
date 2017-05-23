@@ -10,9 +10,9 @@
 
 OpenFileManager::OpenFileManager()
 {
-   openFileTable = new SysOpenFile*[OPEN_FILE_TABLE_SIZE];
-   for(int i=0; i<OPEN_FILE_TABLE_SIZE; i++)
-    openFileTable[i] = NULL;
+   //openFileTable = new SysOpenFile*[OPEN_FILE_TABLE_SIZE];
+   //for(int i=0; i<OPEN_FILE_TABLE_SIZE; i++)
+   // openFileTable[i] = NULL;
    consoleWriteLock = new Lock("consoleWriteLock");
    usedFileSpace = 0;    // added
 }
@@ -45,7 +45,7 @@ int OpenFileManager::addOpenFile(OpenFile* openFile, char* fileName)
     if(index == ERR_FAIL_FIND){
         if(usedFileSpace == OPEN_FILE_TABLE_SIZE)
             return ERR_FAIL_ADD;
-        for(int i=2; i < OPEN_FILE_TABLE_SIZE; i++){
+        for(int i=0; i < OPEN_FILE_TABLE_SIZE; i++){
             if(openFileTable[i] == NULL){
                 openFileTable[i] = new SysOpenFile(openFile, i, fileName);
                 usedFileSpace++;
@@ -105,6 +105,7 @@ void OpenFileManager::reduceOpenFiles(int index)
         openFileTable[index] = NULL;
     }
 } 
+
 
 SysOpenFile* OpenFileManager::getFile(char* filename, int& index) {
 

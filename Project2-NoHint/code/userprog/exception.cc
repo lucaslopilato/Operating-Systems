@@ -348,7 +348,7 @@ void doWrite()
 
 SpaceId doFork()
 {
-    if(currentThread->space->getPageNum() > (unsigned)memoryManager->getFreeFrameNum()  || processManager->getPIDsFree() <= 0)
+    if(currentThread->space->getPageNum() > memoryManager->getFreeFrameNum()  || processManager->getPIDsFree() <= 0)
         return -1;
 
     int funcAddr = machine->ReadRegister(4);                        // func Address in 4th register
@@ -365,10 +365,8 @@ SpaceId doFork()
     processManager->trackPCB(childPID, childPCB);       // link childPCB to childPID
     childPCB->thread = childThread;                     // set child thread
     childPCB->thread->space = copyAddrSpace;            // set duplicate address space to child
-    // new thread creates a bridge to execute user function
-    childPCB->thread->Fork(ForkBridge, funcAddr);
-    // Current thread yields to new thread
-    doYield();
+    childPCB->thread->Fork(ForkBridge, funcAddr);       // new thread creates a bridge to execute user function
+    doYield();                                          // Current thread yields to new thread
     return childPID;
 }
 

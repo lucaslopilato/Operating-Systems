@@ -82,7 +82,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
     ASSERT(numPages <= NumPhysPages);   // Check for physical memory requirements
     
     /* Changes from initial code made here */
-    if((signed) numPages <= memoryManager->getFreeFrameNum())
+    if(numPages <= memoryManager->getFreeFrameNum())
         this->pid = processManager->allocPid();
     else
         this->pid = DNE;
@@ -97,7 +97,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
     pageTable = new TranslationEntry[numPages];
     for (i = 0; i < numPages; i++) {
         pageTable[i].virtualPage = i; // for now, virtual page # = phys page #
-        pageTable[i].physicalPage = i;
+        pageTable[i].physicalPage = memoryManager->allocFrame();
         pageTable[i].valid = TRUE;
         pageTable[i].use = FALSE;
         pageTable[i].dirty = FALSE;
@@ -110,7 +110,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
 
     // zero out the entire address space, to zero the unitialized data segment
     // and the stack segment
-    bzero(machine->mainMemory, size);
+    // bzero(machine->mainMemory, size);
 
     /* Changes from initial code here */
     machineLock->Acquire();
@@ -180,7 +180,7 @@ AddrSpace::~AddrSpace()
 {
 
     /* Additions to original code */
-    for(unsigned int i=0; i<numPages; i++)
+    for(int i=0; i<numPages; i++)
         memoryManager->freeFrame(pageTable[i].physicalPage);
     /* End of changes */
 
