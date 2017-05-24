@@ -206,12 +206,6 @@ void execLauncher(int unused)
 
 int doExec(char *fileName)
 {
-   
-    PCB *childPcb;
-    int parentPid, childPid;
-    OpenFile *execFile;
-    AddrSpace* childSpace;  // Added to original code
-    Thread* childThread;    // Added to original code
 
 
     // Finally it needs an address space. We will initialize the address
