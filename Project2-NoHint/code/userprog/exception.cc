@@ -195,6 +195,7 @@ void execLauncher(int unused)
     //curAddrSpace->InitRegisters();
     //curAddrSpace->RestoreState();
     currentThread->space->InitRegisters();
+    currentThread->space->SaveState();
     currentThread->space->RestoreState();
     machine->Run();
 }
@@ -210,25 +211,18 @@ int doExec(char *fileName)
     //char *filename = new char [MAX_FILENAME + 1], *kernelPtr = filename;
     //char *userPtr, *endOfPage;
 
-    PCB *childPcb;
-    int parentPid, childPid;
-    OpenFile *execFile;
-    AddrSpace* childSpace;  // Added to original code
-    Thread* childThread;    // Added to original code
-
-
     // Finally it needs an address space. We will initialize the address
     // space by loading in the program found in the executable file that was
     // passed in as the first argument.
 
-    execFile = fileSystem->Open(fileName);
-    
-    /* Additions here */
+    OpenFile *execFile = fileSystem->Open(fileName);
     if(execFile == NULL){
         fprintf(stderr, "Couldn't open file %s to execute. Terminating process\n", fileName);
         return -1;
     }
-    childSpace = new AddrSpace(execFile);
+
+    //Create new childSpace
+    AddrSpace* childSpace = new AddrSpace(execFile);
     //Check validity of child space exit if invalid
     if(!childSpace->isValid()){
         delete childSpace;
@@ -237,31 +231,37 @@ int doExec(char *fileName)
     }
 
     // Initializing PCB
-    childPid = childSpace->getPID();
-    parentPid = currentThread->space->getPID();
-    childPcb = new PCB(childPid, parentPid);
+    int childPid = childSpace->getPID();
+    int parentPid = currentThread->space->getPID();
+    PCB *childPcb = new PCB(childPid, parentPid);
     processManager->trackPCB(childPid, childPcb);
 
     // Create kernel thread to manage process
-    childThread = new Thread(fileName);
+    Thread *childThread = new Thread(fileName);
 
     childThread->space = childSpace;
     childPcb->thread = childThread;
 
     /* End of Additions */
+    fileSystem->Remove(fileName);
     delete execFile;
 
     // We launch the process with the kernel threads Fork() function. Note
     // that this is different from our implementation of Fork()!
-    childPcb->thread->Fork(execLauncher, 0);
+
+    childPcb->thread->Fork(execLauncher, machine->ReadRegister(RetAddrReg));
     fprintf(stderr, "Process %d executing process %d\n", parentPid, childPid);
 
     // Because we just overwrote the current thread's address space when we
     // called `new AddrSpace(execFile)` it can no longer be allowed to
     // execute so we call Finish(). You will have to fix this in your
     // implementation once you implement multiple address spaces.
-    //currentThread->Finish();
-    doYield();
+    //doYield();
+    currentThread->Yield();
+
+    //currentThread->Exit();
+
+
     // We shouldn't reach this point in the code...
     return childPid;
 }
@@ -368,6 +368,7 @@ void doYield()
 
 int doJoin()
 {
+    printf("In Join\n");
     int childPID = machine->ReadRegister(4);
     int childExitStatus = processManager->waitStateOn(childPID, currentThread->space->getPID());
     return childExitStatus;

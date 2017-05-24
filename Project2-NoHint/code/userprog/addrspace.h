@@ -35,6 +35,7 @@ public:
 
     void SaveState();			        // Save/restore address space-specific
     void RestoreState();		        // info on a context switch
+    int ReadFile(int virtAddr, OpenFile* file, int size, int fileAddr);
 
     int Translate(int virtualAddr);     // Return the physical memory address
                                         // mapped by a virtual address

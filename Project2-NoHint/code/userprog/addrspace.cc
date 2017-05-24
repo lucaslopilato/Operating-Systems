@@ -110,7 +110,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
 
     // zero out the entire address space, to zero the unitialized data segment
     // and the stack segment
-    // bzero(machine->mainMemory, size);
+    //bzero(machine->mainMemory, size);
 
     /* Changes from initial code here */
     machineLock->Acquire();
@@ -118,24 +118,27 @@ AddrSpace::AddrSpace(OpenFile *executable)
         int physicalAddress = pageTable[i].physicalPage * PageSize; // Physical Address w/PageTable
         bzero(&(machine->mainMemory[physicalAddress]), PageSize);   // Zero out memmory
     }
+
     /* End of Changes */
 
     // then, copy in the code and data segments into memory
     if (noffH.code.size > 0) {
         DEBUG('a', "Initializing code segment, at 0x%x, size %d\n",
               noffH.code.virtualAddr, noffH.code.size);
-        executable->ReadAt(&(machine->mainMemory[noffH.code.virtualAddr]),
-                           noffH.code.size, noffH.code.inFileAddr);
+        ReadFile(noffH.code.virtualAddr, executable, noffH.code.size, noffH.code.inFileAddr);
+        //executable->ReadAt(noffH.code.virtualAddr,
+        //                   noffH.code.size, noffH.code.inFileAddr);
     }
     if (noffH.initData.size > 0) {
         DEBUG('a', "Initializing data segment, at 0x%x, size %d\n",
               noffH.initData.virtualAddr, noffH.initData.size);
-        executable->ReadAt(&(machine->mainMemory[noffH.initData.virtualAddr]),
-                           noffH.initData.size, noffH.initData.inFileAddr);
+        //executable->ReadAt(noffH.initData.virtualAddr,
+        //                   noffH.initData.size, noffH.initData.inFileAddr);
+        ReadFile(noffH.initData.virtualAddr, executable, noffH.initData.size, noffH.initData.inFileAddr);
+
     }
 
     machineLock->Release();     // Added from original code
-
 }
 
 
@@ -267,4 +270,53 @@ int AddrSpace::Translate(int virtualAddr)
     physicalAddr = frame * PageSize + offset;
 
     return physicalAddr;
+}
+
+//----------------------------------------------------------------------
+// AddrSpace::ReadFile
+//     
+//     Loads the code and data segments into the translated memory.
+//----------------------------------------------------------------------
+
+int AddrSpace::ReadFile(int virtAddr, OpenFile* file, int size, int fileAddr) {
+
+    int numBytesRead = 0;
+    int numBytesLeft = size;
+    int numBytesToReadThisLoop = 0;
+    int physAddr = 0;
+    int currVirtAddr = virtAddr;
+    int bytesFound = 0;
+
+    while (numBytesRead < size) {
+
+        if (numBytesLeft > PageSize) {
+            numBytesToReadThisLoop = PageSize;
+        } else {
+            numBytesToReadThisLoop = numBytesLeft;
+        }
+        diskBufferLock->Acquire();
+        bytesFound = file->ReadAt(diskBuffer, numBytesToReadThisLoop, fileAddr);
+        diskBufferLock->Release();
+
+        physAddr = Translate(currVirtAddr);
+
+        if (physAddr != -1) { // zero the dest bytes, then copy over
+            
+            machineLock->Acquire();
+            bzero(&(machine->mainMemory)[physAddr], numBytesToReadThisLoop);
+            bcopy(&(diskBuffer[0]), &((machine->mainMemory)[physAddr]),
+                numBytesToReadThisLoop);
+            machineLock->Release();
+
+            currVirtAddr += numBytesToReadThisLoop;
+            numBytesLeft -= numBytesToReadThisLoop;
+
+            numBytesRead += bytesFound;
+            fileAddr += bytesFound;
+        } 
+        else {
+            return -1;
+        }
+    }
+    return 0;
 }
