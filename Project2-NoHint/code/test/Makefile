@@ -68,4 +68,4 @@ _/%.o: %.c
 .PHONY: clean
 
 clean:
-	rm -rf _
+	rm -rf $(patsubst _/%,%,$(TARGETS))
