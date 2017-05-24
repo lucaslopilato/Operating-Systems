@@ -125,16 +125,18 @@ AddrSpace::AddrSpace(OpenFile *executable)
     if (noffH.code.size > 0) {
         DEBUG('a', "Initializing code segment, at 0x%x, size %d\n",
               noffH.code.virtualAddr, noffH.code.size);
-        ReadFile(noffH.code.virtualAddr, executable, noffH.code.size, noffH.code.inFileAddr);
-        //executable->ReadAt(noffH.code.virtualAddr,
-        //                   noffH.code.size, noffH.code.inFileAddr);
+        // Got rid of ReadFile and did this instead
+        // Look into code/filesys/openfile.h.cc to see how this works
+        executable->ReadAt(&(machine->mainMemory[Translate(noffH.code.virtualAddr)]),
+                           noffH.code.size, noffH.code.inFileAddr);
     }
     if (noffH.initData.size > 0) {
         DEBUG('a', "Initializing data segment, at 0x%x, size %d\n",
               noffH.initData.virtualAddr, noffH.initData.size);
-        //executable->ReadAt(noffH.initData.virtualAddr,
-        //                   noffH.initData.size, noffH.initData.inFileAddr);
-        ReadFile(noffH.initData.virtualAddr, executable, noffH.initData.size, noffH.initData.inFileAddr);
+        // Got rid of ReadFile and did this instead
+        // Look into code/filesys/openfile.h.cc to see how this works
+        executable->ReadAt(&(machine->mainMemory[Translate(noffH.initData.virtualAddr)]),
+                           noffH.initData.size, noffH.initData.inFileAddr);
 
     }
 
@@ -272,6 +274,9 @@ int AddrSpace::Translate(int virtualAddr)
     return physicalAddr;
 }
 
+
+/*
+
 //----------------------------------------------------------------------
 // AddrSpace::ReadFile
 //     
@@ -320,3 +325,5 @@ int AddrSpace::ReadFile(int virtAddr, OpenFile* file, int size, int fileAddr) {
     }
     return 0;
 }
+
+*/
