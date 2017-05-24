@@ -8,7 +8,7 @@
 SysOpenFile::SysOpenFile(OpenFile* file, int fileID, char* fileName)
 {
     this->openFile = file;
-    this->fileId = fileId;
+    this->fileId = fileID;
     this->filename = fileName;
     this->numProcessesOpen = 1;
 }

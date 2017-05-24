@@ -156,7 +156,7 @@ AddrSpace::AddrSpace(const AddrSpace* other)
     this->pageTable = new TranslationEntry[numPages];
     for (int i = 0; i < numPages; i++) {
         pageTable[i].virtualPage = other->pageTable[i].virtualPage;     //Next available virtual page
-        pageTable[i].physicalPage = memoryManager -> allocFrame();      //Next available physical frame
+        pageTable[i].physicalPage = memoryManager->allocFrame();      //Next available physical frame
         
         int physAddrSrc = other->pageTable[i].physicalPage * PageSize;  //Pyshical Address Source
         int physAddrDest = this->pageTable[i].physicalPage * PageSize;  //Physical Address Destination

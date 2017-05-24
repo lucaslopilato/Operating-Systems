@@ -96,7 +96,7 @@ void ProcessManager::trackPCB(int pid, PCB *pcb)
 
 PCB* ProcessManager::getPCB(int pid)
 {
-    return this->pcbList[pid];
+    return pcbList[pid];
 }
 
 
@@ -111,15 +111,17 @@ int ProcessManager::waitStateOn(int childPID, int parentPID)
     lockList[childPID]->Acquire();
     fprintf(stderr, "Process %d waiting on process %d\n", parentPID, childPID);
 
-    while(pcbList[childPID]->getExitStatus() == ERR_NOT_FINISHED)
+    while(pcbList[childPID]->getExitStatus() == ERR_NOT_FINISHED){
         conditionList[childPID]->Wait(lockList[childPID]);
+    }
 
     exitStatus = pcbList[childPID]->getExitStatus();
     fprintf(stderr, "Process %d finsihed waiting for process %d\n",parentPID, childPID);
 
     // Deallocate memory when currThread == parentThread
-    if(parentPID == pcbList[childPID]->parentPid)
+    if(parentPID == pcbList[childPID]->parentPid){
         freePid(childPID);
+    }
 
     lockList[childPID]->Release();
     return exitStatus;

@@ -206,13 +206,10 @@ void execLauncher(int unused)
 
 int doExec(char *fileName)
 {
-   
-    PCB *childPcb;
-    int parentPid, childPid;
-    OpenFile *execFile;
-    AddrSpace* childSpace;  // Added to original code
-    Thread* childThread;    // Added to original code
-
+    //int filenameVirtAddr = machine->ReadRegister(4);
+    //int filenamePhysAddr, bytesCopied = 0;
+    //char *filename = new char [MAX_FILENAME + 1], *kernelPtr = filename;
+    //char *userPtr, *endOfPage;
 
     // Finally it needs an address space. We will initialize the address
     // space by loading in the program found in the executable file that was
@@ -259,11 +256,16 @@ int doExec(char *fileName)
     // called `new AddrSpace(execFile)` it can no longer be allowed to
     // execute so we call Finish(). You will have to fix this in your
     // implementation once you implement multiple address spaces.
+    //doYield();
     currentThread->Yield();
+
+    //currentThread->Exit();
+
 
     // We shouldn't reach this point in the code...
     return childPid;
 }
+
 //----------------------------------------------------------------------
 // doWrite
 //----------------------------------------------------------------------
@@ -492,15 +494,15 @@ void doClose()
 void readFileNameUserToKernel(char* filename)
 {
 
-    int currPosition = 0;
+    int currentPosition = 0;
     int filenameA = machine->ReadRegister(4);
 
     do{
-        moveBytesMemoryToKernel(filenameA, filename+currPosition, 1);
+        moveBytesMemoryToKernel(filenameA, filename+currentPosition, 1);
         filenameA++;
-    } while (filename[currPosition++] != 0);
+    } while (filename[currentPosition++] != 0);
 
-    filename[currPosition] = 0;
+    filename[currentPosition] = 0;
 }
 
 
