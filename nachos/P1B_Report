@@ -1,0 +1,110 @@
+Project Report for Part B
+- Lucas Lopilato - Phillip Fry - Wesley Pollek
+  
+This file includes
+  - the group members, what each person did and why each does a fair share of the workload
+  - a design explanation of these 3 tasks
+  - how to compile and run your code
+  - The name of files that are modified or created compared to the original Nacho source code. 
+    What functionalities are added to each file. Explain their functionalities
+  - What is completed and what is not. What is working and what is not working. And for the ones
+    that are incomplete, what is their current status.
+    
+Group Member Roles
+Task leads...
+
+Task 1: Phillip Fry
+Task 2: Wesley Pollek
+Task 3: Lucas Lopilato
+
+This is a fair distribution of the workload on the project since each task requires a significant 
+amount of work to be done.
+
+Design Explanation:
+Task 1: 
+  The main work done for this task was initially setting up all of the necessary files
+  (threadtest.cc, Makefile.common) and adding the required files (hashchain.h, hashchain.cc,
+  rwlock.h, rwlock.cc). 
+  After everything was set up most of the work took place in the hashchain.cc
+  file which allows for each of the 3 synchronization methods (semaphores, nachos locks, read-write 
+  locks) to be used depending on the preprocessor construct (#ifdef/#endif). These preprocessors are
+  also implemented in rwlock.h to provide the necessary class member variable needed to execute each
+  synchronization method. 
+  The preprocessor symbol P1_RWLOCK indicates the use of the read-write method
+  which uses the four member variables AR, WR, AW, and WW as well as Conditions okToRead and okToWrite
+  and a lock. The code for these methods were done in task 3. 
+  The preprocessor symbol P1_SEMAPHORE indicates the use of the semaphore which is initialized to 1
+  which indicates that it is available. The semaphore executes P() on startRead() or startWrite() 
+  locking the data being accessed. It then executes V() on doneRead() or doneWrite() unlocking the data.
+  Finally if neither preprocessor symbol is utilized it defaults to the use of NACHOS lock which is 
+  fairly similar to pthread locks.
+Task 2:
+  Done in the synch.cc and synch.h file.
+  The main work done for this task was implementing the four methods Lock::Lock(char* debugName),
+  Lock::~Lock(), void Lock::Acquire(), and void Lock::Release(). The constructor initializes a lock
+  object and provides a name to help distinguish the lock in debugging. The destructor deallocates 
+  the lock object when it is not needed. The Acquire() function waits for a free lock then acquires 
+  the lock for the current thread. The Release() function releases a previously acquired lock and 
+  wakes another thread waiting for the lock.
+Task 3:
+  Done in the synch.cc and synch.h file.
+  The main work done for this task was implementing the five methods Condition::Condition(char* debugNAme),
+  Condition::~Condition(), void Condition::Wait(Lock* conditionLock), void Condition::Signal(Lock* conditionLock),
+  void Condition::Broadcast(Lock* conditionLock). The constructor initializes a condition object.
+  The desctructor deallocates a condition variable no longer in use. The Wait() function sleeps a 
+  thread until a condition becomes free, then it acquires the condition for the current thread.
+  The Signal() function wakes up just one other thread waiting on the condition. The Broadcast()
+  function  wakes up all thread waiting on a condition.
+
+Compilation and Running Code
+  - to compile this code you simply need to navigate to nachos/code/threads and type "make"
+    - Running each implementation
+    - Semaphore
+      ./nachos_sem
+    - Nachos Lock
+      ./nachos_lock
+    - Read-Write Lock
+      ./nachos_rw
+     
+
+Files Modified/Created compared to original Nacho Source Code (describe functionalities)
+- Modified Files List:
+    - threadtest.cc (original file contents located in original folder, new implementation provided
+      from the source code file threadtest-submit.cc)
+    - Makefile.common (original file contents still in code folder and renamed to Makefile_original.common
+      the new Makefile.common has the code implementation given to us)
+    - hashchain.h (changed slightly to revised form provided in hashchain-submit.h)
+    - hashchain.cc (changed slightly to revised form provided in hashcain-submit.cc)
+    - synch.cc (implementation of three synchronization primitives)
+      - Use of a Sempahore: permits specified number "n" of threads accessing the same data
+      - Use of a Lock: permits a single thread to access shared data
+      - Use of Conditions: a signaling implementation that is used with a Lock to signal processes
+        about the availability of shared data
+- Newly Created Files:
+    - hashchain.h (revised from Project 1A)
+    - hashchain.cc (revised from Project 1A)
+       - added the increment() function
+    - rwlock.h (revised from Project 1A)
+       - added precompiler directives
+    - rwlock.cc (revised from Project 1A)
+       - added precompiler directives and implementations for tasks 1-3
+          - implemented Semaphore Lock that behaves like a mutex lock with initial value of 1
+          - implemented Nachos Lock that locks the bucket being accessed (no regard to reading or writing)
+          - implemented Read-Write Lock with 2 condition variable (okToRead and okToWrite) and a single lock
+            Permissions: single writer, multiple readers at once
+
+Completed:
+  - Implementaion of ...
+    - Semaphore
+    - Lock
+    - Condition Variable
+  - Thread-safe Hashmap utilizing any of the implementations
+
+Not Completed:
+  - N/A all completed
+
+Working:
+  - All test cases pass. Everything should be working
+  
+Not Working (status):
+  - N/A all should be working
