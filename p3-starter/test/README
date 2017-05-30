@@ -1,0 +1,14 @@
+
+The following code works with this release
+exec1.c
+exec2.c
+exec-test2.c
+testvmfork.c
+
+The following code does not work without VM page replacement support
+testvm1.c
+testvm.c
+vm-test.c
+testvmexec.c
+testvmexec2.c*
+testvmfork1.c*
