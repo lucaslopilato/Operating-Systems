@@ -60,14 +60,49 @@ void VirtualMemoryManager::swapPageIn(int virtAddr)
                 return;
         }
 
+        //Begin Lucas' code
+        //Perform 2nd Change algorithm to find next victim
+        
+        //Page Table Size
+        int pageTableSize = currentThread->space->getNumPages();
+        
         FrameInfo * physPageInfo = physicalMemoryInfo + nextVictim;
+        currPageEntry = getPageTableEntry(physPageInfo);
+
+        //Loop until an unused entry is found
+        while(!currPageEntry->use){
+            //Set to false
+            currPageEntry->use = false;
+
+            //Move to next potential victim
+            nextVictim = (nextVictim + 1) % pageTableSize;
+
+            //Update physPageInfo
+            physPageInfo = physicalMemoryInfo + nextVictim;
+            currPageEntry = getPageTableEntry(physPageInfo);
+        }
+        
+        //If selected victim is dirty
+        //Write to SWAP
+        if(currPageEntry->dirty){
+            //Get Page Start Pointer
+            char* pg = machine->mainMemory + 
+                       currPageEntry->physicalPage * PageSize ;
+            writeToSwap(pg, PageSize, currPageEntry->locationOnDisk);
+        }
+        
+        //End Lucas' code
+
         //We assume this page is not occupied by any process space
         physPageInfo->space = currentThread->space;
         physPageInfo->pageTableIndex = virtAddr / PageSize;
         currPageEntry = getPageTableEntry(physPageInfo);
         currPageEntry->physicalPage = memoryManager->getPage();
         loadPageToCurrVictim(virtAddr);
-        nextVictim = nextVictim + 1;
+
+        //Changed to loop
+        //nextVictim = nextVictim + 1;
+        nextVictim = (nextVictim + 1) % pageTableSize;
 }
 
 
