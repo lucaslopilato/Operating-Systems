@@ -43,7 +43,8 @@ class TranslationEntry {
     bool dirty;         // This bit is set by the hardware every time the
 			// page is modified.
 
-    int locationOnDisk; // The location where disk-resident pages are loaded from
+    // Remove this according to instructions for Part 2
+    //int locationOnDisk; // The location where disk-resident pages are loaded from
 
 };
 

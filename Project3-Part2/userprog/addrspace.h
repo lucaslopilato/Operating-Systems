@@ -26,28 +26,30 @@
 
 class AddrSpace {
   public:
-    AddrSpace(const AddrSpace* other, PCB* pcb);  // Copy constructor
-    AddrSpace(OpenFile *executable, PCB* pcb);// Create an address space
-    ~AddrSpace();			// De-allocate an address space
+    AddrSpace(const AddrSpace* other, PCB* pcb);    // Copy constructor
+    AddrSpace(OpenFile *executable, PCB* pcb);      // Create an address space
+    ~AddrSpace();			                        // De-allocate an address space
 
-    int Translate(int virtualAddress);  // Translates a virtual to physical addr
+    int Translate(int virtualAddress);              // Translates a virtual to physical addr
     int ReadFile(int virtAddr, OpenFile* file, int size, int fileAddr);
-    int getNumPages() {return numPages;} // returns the number of pages held
+    int getNumPages() {return numPages;}            // returns the number of pages held
 
-    void InitRegisters();		// Initialize user-level CPU registers,
-    void SaveState();			// Save/restore address space-specific
-    void RestoreState();		// info on a context switch 
-    PCB* getPCB();                      // returns the associated PCB
-    bool isValid();                     // means we allocated addrspace success
+    void InitRegisters();		            // Initialize user-level CPU registers,
+    void SaveState();			            // Save/restore address space-specific
+    void RestoreState();		            // info on a context switch 
+    PCB* getPCB();                          // returns the associated PCB
+    bool isValid();                         // means we allocated addrspace success
     TranslationEntry* getPageTableEntry(int pageTableIndex);
     int getPageIndex(TranslationEntry* page);
-    TranslationEntry *pageTable;	// Assume linear page table translation
-					// for now!
+    TranslationEntry *pageTable;	   // Assume linear page table translation for now!
+    int* diskLocations;                // For page locations on Disk (added for P2 helper)
+                                       // This is implemented to replace locationOnDisk in machine/translate.h
+
+
 
   private:
-    unsigned int numPages;		// Number of pages in the virtual 
-					// address space
-    PCB* pcb;                           // associated PCB
+    unsigned int numPages;		// Number of pages in the virtual address space
+    PCB* pcb;                   // associated PCB
 };
 
 #else // don't use VM stuff
@@ -56,26 +58,24 @@ class AddrSpace {
 
 class AddrSpace {
   public:
-    AddrSpace(const AddrSpace* other, PCB* pcb);  // Copy constructor
-    AddrSpace(OpenFile *executable, PCB* pcb);// Create an address space
-    ~AddrSpace();			// De-allocate an address space
+    AddrSpace(const AddrSpace* other, PCB* pcb);    // Copy constructor
+    AddrSpace(OpenFile *executable, PCB* pcb);      // Create an address space
+    ~AddrSpace();			                        // De-allocate an address space
 
-    int Translate(int virtualAddress);  // Translates a virtual to physical addr
+    int Translate(int virtualAddress);              // Translates a virtual to physical addr
     int ReadFile(int virtAddr, OpenFile* file, int size, int fileAddr);
-    int getNumPages() {return numPages;} // returns the number of pages held
+    int getNumPages() {return numPages;}            // returns the number of pages held
 
-    void InitRegisters();		// Initialize user-level CPU registers,
-    void SaveState();			// Save/restore address space-specific
-    void RestoreState();		// info on a context switch 
-    PCB* getPCB();                      // returns the associated PCB
-    bool isValid();                     // means we allocated addrspace success
-    TranslationEntry *pageTable;	// Assume linear page table translation
-					// for now!
+    void InitRegisters();		     // Initialize user-level CPU registers,
+    void SaveState();			     // Save/restore address space-specific
+    void RestoreState();		     // info on a context switch 
+    PCB* getPCB();                   // returns the associated PCB
+    bool isValid();                  // means we allocated addrspace success
+    TranslationEntry *pageTable;	 // Assume linear page table translation for now!
 
   private:
-    unsigned int numPages;		// Number of pages in the virtual 
-					// address space
-    PCB* pcb;                           // associated PCB
+    unsigned int numPages;		// Number of pages in the virtual address space
+    PCB* pcb;                   // associated PCB
 };
 
 #endif // VM or non-VM

@@ -86,6 +86,7 @@ AddrSpace::AddrSpace(OpenFile *executable, PCB* newPCB)
     this->pcb = newPCB;
 
     pageTable = new TranslationEntry[numPages];
+    this->diskLocations = new int[numPages];        // added for part 2
     for (i = 0; i < numPages; i++) {
 
         // Set the usual bits for a new process
@@ -98,13 +99,19 @@ AddrSpace::AddrSpace(OpenFile *executable, PCB* newPCB)
 
         // Allocate space for entire addr space on backing store at creation
         //pageTable[i].space = this;
-        pageTable[i].locationOnDisk = virtualMemoryManager->allocSwapSector();
+        
+        //pageTable[i].locationOnDisk = virtualMemoryManager->allocSwapSector();
+        diskLocations[i] =  virtualMemoryManager->allocSwapSector();    // get page indicies for swap
+
         char placeHolder[PageSize];
         bzero(placeHolder, PageSize);
-        virtualMemoryManager->writeToSwap(placeHolder, PageSize, pageTable[i].locationOnDisk);
+        //virtualMemoryManager->writeToSwap(placeHolder, PageSize, pageTable[i].locationOnDisk);
+        virtualMemoryManager->writeToSwap(placeHolder, PageSize, diskLocations[i]);    //use new helper
 
         // Debuggin output
-        int currVirtPage = pageTable[i].locationOnDisk / PageSize;
+        //int currVirtPage = pageTable[i].locationOnDisk / PageSize;
+        // use new implementation
+        int currVirtPage = diskLocations[i] / PageSize;
         DEBUG('v',"Z %d: %d\n", pcb->getPID(), currVirtPage);
 
         // Maintain swap space page information
@@ -147,9 +154,9 @@ AddrSpace::AddrSpace(const AddrSpace* other, PCB* newPCB)
 
     this->pcb = newPCB;
     pageTable = new TranslationEntry[numPages];
+    this->diskLocations = new int[numPages];        // reconstruct new helper to copy disk locations
 
     for (unsigned int i = 0; i < numPages; i++) { 
-
         pageTable[i].virtualPage = i;
         pageTable[i].physicalPage = -1;
         pageTable[i].valid = FALSE;
@@ -159,10 +166,16 @@ AddrSpace::AddrSpace(const AddrSpace* other, PCB* newPCB)
 
         // Allocate space for entire addr space on backing store at creation
         //pageTable[i].space = this;
-        pageTable[i].locationOnDisk = virtualMemoryManager->allocSwapSector();
-        virtualMemoryManager->copySwapSector(pageTable[i].locationOnDisk,
-                                             (other->pageTable)[i].locationOnDisk);
         
+
+        //pageTable[i].locationOnDisk = virtualMemoryManager->allocSwapSector();
+        //virtualMemoryManager->copySwapSector(pageTable[i].locationOnDisk,
+        //                                     (other->pageTable)[i].locationOnDisk);
+        // Use new helper for part 2
+        this->diskLocations[i] = virtualMemoryManager->allocSwapSector();
+        virtualMemoryManager->copySwapSector(diskLocations[i], other->diskLocations[i]);
+
+
         // Maintain swap space page information
         //SwapSectorInfo * swapInfo =
         //       virtualMemoryManager->getSwapSectorInfo(pageTable[i].locationOnDisk / PageSize);
@@ -202,8 +215,9 @@ AddrSpace::InitRegisters()
     int i;
 
     machineLock->Acquire();
-    for (i = 0; i < NumTotalRegs; i++)
-	machine->WriteRegister(i, 0);
+    for (i = 0; i < NumTotalRegs; i++){
+	   machine->WriteRegister(i, 0);
+    }
 
     // Initial program counter -- must be location of "Start"
     machine->WriteRegister(PCReg, 0);	
@@ -299,8 +313,11 @@ int AddrSpace::ReadFile(int virtAddr, OpenFile* file, int size, int fileAddr)
         int pageTableIndex = virtAddr / PageSize;
         int offset = virtAddr % PageSize;
         int numBytesThisLoop = size < PageSize ? size : PageSize; // read 1 page at a time
-        virtualMemoryManager->writeToSwap(buffer1 + bytesCopiedSoFar, numBytesThisLoop,
-                                        pageTable[pageTableIndex].locationOnDisk + offset);
+        //virtualMemoryManager->writeToSwap(buffer1 + bytesCopiedSoFar, numBytesThisLoop,
+        //                                pageTable[pageTableIndex].locationOnDisk + offset);
+        // Use new helper
+        virtualMemoryManager->writeToSwap(  buffer1 + bytesCopiedSoFar, numBytesThisLoop,
+                                            diskLocations[pageTableIndex] + offset);
         size -= numBytesThisLoop;
         bytesCopiedSoFar += numBytesThisLoop;
         virtAddr += numBytesThisLoop;
