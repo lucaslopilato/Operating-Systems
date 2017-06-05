@@ -1,1 +1,19 @@
-Need to do this
+P3A Report
+P3B Report submitted for the P3B submission portion
+
+1. MIPS Binary instruction: Load Word(lw), SC_EXEC, SC_CREATE, SC_OPEN
+2. TestVMFork.c can be ran smoothly because the memory is never requested.
+   This means that a page fault never occurs, resulting in that function
+   never being called.
+3. In part A, only the page fault handler was implemented. The purpose of this
+   section is to locate and handle a page fault in the case that a page was 
+   requested that is not in the page table. 
+   In the implementation first, we locate the physical page info for the current
+   possible victim. We then cyccle through page entries. If the current page 
+   entry is unused or NULL, we select that as the victim. Otherwise we set the
+   page's use bit to 0 and keep moving. This implements the 2nd change algo.
+   
+   If we found an empty victim page slot, we load the new space, info, index, 
+   and entry into the space. If the victim slot is filled with a page, we write
+   the victim page to the swap space, set the dirty bit to false, then overwrite
+   the space with the new page.
