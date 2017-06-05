@@ -1,1 +1,8 @@
-Initial Test. Need to finish report after ensuring this was done correctly.
+Lucas Lopilato
+Phillip Fry
+Wesley Pollek
+
+P3 Report for part B:
+1. In this part of the project, the MIPS binary instructions that could risk triggering a page fault are the memory accesses to load information, exec and creation of opening of services.
+2. Since the testvmfork function only creates a dummy array then runs some forks, it never needs to access that information in mapped memory, so it can run and pass the test without need for a page fault handler.
+3. For this part, we successfully changed the functionality of our page replacement algorithm by creating a helper FrameInfo variable to hold the physical page location in our virtual memory manager. We then created an array of integers to store disk locations from the memory manager and copy them into the address space whenever creating the new space. Everything works and passes the tests now without using the locationOnDisk helper from translate.h because we are storing the locations for each slot in the addrspace creation and accessing them that way.
